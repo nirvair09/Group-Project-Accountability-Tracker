@@ -57,3 +57,11 @@ export async function updateTaskStatus(
     metadata: { taskId, from: task.status, to: status },
   });
 }
+
+export async function listTask(projectId: string) {
+  const res = await pool.query(
+    `SELECT * FROM tasks WHERE projectId=$1 ORDER BY createdAt DESC`,
+    [projectId],
+  );
+  return res.rows;
+}
