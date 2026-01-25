@@ -13,25 +13,28 @@ export async function createTaskController(req: Request, res: Response) {
   return res.status(201).json({ message: "Task created successfully" });
 }
 
+export async function updateTaskStatusController(req: Request, res: Response) {
+  const parsed = updateStatusScehma.safeParse(req.body);
 
-export async function updateTaskStatusController(req: Request, res: Response){
-    const parsed = updateStatusScehma.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error });
+  }
 
-    if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error });
-    }
+  const userId = req.headers["x-user-id"] as string;
+  if (!userId) {
+    return res.status(400).json({ error: "Missing x-user-id header" });
+  }
 
-    const userId=req.headers["x-user-id"] as string;
-    if(!userId){
-        return res.status(400).json({ error: "Missing x-user-id header" });
-    }
+  await taskService.updateTaskStatus(
+    req.params.id as string,
+    userId,
+    parsed.data.status,
+  );
 
-    await taskService.updateTaskStatus(
-        req.params.id as string,
-        userId,
-        parsed.data.status
-    );
-
-    res.json({ message: "Task status updated successfully" });
+  res.json({ message: "Task status updated successfully" });
 }
-  
+
+export async function getTask(req: Request, res: Response) {
+  const tasks = await taskService.listTask(req.params.projectId as string);
+  res.json(tasks);
+}
