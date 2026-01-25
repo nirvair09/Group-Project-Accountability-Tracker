@@ -7,7 +7,9 @@ const app = express();
 
 app.use(express.json());
 
-app.get("/health", (red, res) => {
+import { Request, Response } from "express";
+
+app.get("/health", (req: Request, res: Response) => {
   res.json({ status: "sabb changa sii", service: "task-service" });
 });
 
