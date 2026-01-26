@@ -1,8 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AppLayout from "./layout/Applayout";
+import AppLayout from "./layout/AppLayout";
+
 import Dashboard from "./pages/Dashboard";
-import ProjectPage from "./pages/ProjectPage";
-import FacultyReport from "./pages/FacultyReport";
+import MyTasks from "./pages/MyTasks";
+import MyGroups from "./pages/MyGroups";
+import Activity from "./pages/Activity";
+import Scores from "./pages/Scores";
 
 function App() {
   return (
@@ -10,8 +13,10 @@ function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/projects/:projectId" element={<ProjectPage />} />
-          <Route path="/faculty" element={<FacultyReport />} />
+          <Route path="/tasks" element={<MyTasks />} />
+          <Route path="/groups" element={<MyGroups />} />
+          <Route path="/activity" element={<Activity />} />
+          <Route path="/scores" element={<Scores />} />
         </Route>
       </Routes>
     </BrowserRouter>

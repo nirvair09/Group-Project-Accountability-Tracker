@@ -1,27 +1,26 @@
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import TopNav from "../components/TopNav";
+import Sidebar from "../components/Sidebar";
 
 export default function AppLayout() {
   return (
-    <div>
-      <header
-        style={{
-          padding: "12px 20px",
-          borderBottom: "1px solid #ddd",
-          display: "flex",
-          gap: "20px",
-        }}
-      >
-        <strong>GPAT</strong>
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <TopNav />
 
-        <nav style={{ display: "flex", gap: "12px" }}>
-          <Link to="/">Dashboard</Link>
-          <Link to="/faculty">Faculty View</Link>
-        </nav>
-      </header>
+      <div style={{ flex: 1, display: "flex" }}>
+        <Sidebar />
 
-      <main style={{ padding: "20px" }}>
-        <Outlet />
-      </main>
+        <main
+          style={{
+            flex: 1,
+            padding: "24px",
+            backgroundColor: "#f9fafb",
+            overflowY: "auto",
+          }}
+        >
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
