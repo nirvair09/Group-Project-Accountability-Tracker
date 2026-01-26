@@ -20,9 +20,9 @@ const STATUS_ORDER: TaskStatus[] = [
   "APPROVED",
 ];
 
-type Tab = "TASKS" | "MEMBERS" | "ACTIVITY";
+type Tab = "TASKS" | "MEMBERS" | "ACTIVITY" | "SCORES";
 
-const TABS: Tab[] = ["TASKS", "MEMBERS", "ACTIVITY"];
+const TABS: Tab[] = ["TASKS", "MEMBERS", "ACTIVITY", "SCORES"];
 
 /* -----------------------------
    Component
@@ -194,6 +194,56 @@ export default function GroupDetail() {
 
           {evidenceEvents.filter((e) => e.projectId === groupId).length ===
             0 && <p>No activity recorded.</p>}
+        </div>
+      )}
+      {activeTab === "SCORES" && (
+        <div>
+          <h2>Scores</h2>
+
+          {projectMembers
+            .filter((m) => m.projectId === groupId)
+            .map((member) => {
+              const user = users.find((u) => u.id === member.userId);
+
+              const memberTasks = groupTasks.filter(
+                (t) => t.ownerId === member.userId,
+              );
+
+              const assigned = memberTasks.length;
+
+              const approved = memberTasks.filter(
+                (t) => t.status === "APPROVED",
+              ).length;
+
+              const overdue = memberTasks.filter(
+                (t) =>
+                  t.deadline &&
+                  new Date(t.deadline) < new Date() &&
+                  t.status !== "APPROVED",
+              ).length;
+
+              const completionRate = assigned === 0 ? 0 : approved / assigned;
+
+              const overduePenalty = assigned === 0 ? 0 : overdue / assigned;
+
+              let score = completionRate * 100 - overduePenalty * 30;
+
+              score = Math.max(0, Math.min(100, Math.round(score)));
+
+              return (
+                <div key={member.userId}>
+                  <strong>{user?.name}</strong>
+                  <div>Role: {member.role}</div>
+                  <div>Assigned Tasks: {assigned}</div>
+                  <div>Approved Tasks: {approved}</div>
+                  <div>Overdue Tasks: {overdue}</div>
+                  <div>
+                    Completion Rate: {(completionRate * 100).toFixed(0)}%
+                  </div>
+                  <div>Score: {score}</div>
+                </div>
+              );
+            })}
         </div>
       )}
     </div>
