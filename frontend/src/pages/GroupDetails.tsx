@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
-
+import { evidenceEvents } from "../data/evidence";
 import { tasks } from "../data/tasks";
 import { users } from "../data/users";
 import { projects } from "../data/projects";
@@ -20,14 +20,40 @@ const STATUS_ORDER: TaskStatus[] = [
   "APPROVED",
 ];
 
-type Tab = "TASKS" | "MEMBERS";
-const TABS: Tab[] = ["TASKS", "MEMBERS"];
+type Tab = "TASKS" | "MEMBERS" | "ACTIVITY";
+
+const TABS: Tab[] = ["TASKS", "MEMBERS", "ACTIVITY"];
 
 /* -----------------------------
    Component
 ----------------------------- */
 
 export default function GroupDetail() {
+  function humanizeEvent(event: any) {
+    switch (event.type) {
+      case "TASK_CREATED":
+        return `created task "${event.metadata?.title}"`;
+
+      case "TASK_STATUS_CHANGED":
+        return `changed task status to ${event.metadata?.to}`;
+
+      case "PROJECT_CREATED":
+        return "created the project";
+
+      case "PROJECT_MEMBER_ADDED":
+        return "added a new member to the group";
+
+      case "MILESTONE_CREATED":
+        return "created a milestone";
+
+      case "PEER_REVIEW_SUBMITTED":
+        return "submitted a peer review";
+
+      default:
+        return event.type;
+    }
+  }
+
   const { groupId } = useParams();
 
   // Hooks MUST be at the top
@@ -140,6 +166,34 @@ export default function GroupDetail() {
                 </div>
               );
             })}
+        </div>
+      )}
+      {activeTab === "ACTIVITY" && (
+        <div>
+          <h2>Activity</h2>
+
+          {evidenceEvents
+            .filter((e) => e.projectId === groupId)
+            .sort(
+              (a, b) =>
+                new Date(b.timestamp).getTime() -
+                new Date(a.timestamp).getTime(),
+            )
+            .map((event) => {
+              const user = users.find((u) => u.id === event.userId);
+
+              return (
+                <div key={event.id}>
+                  <div>
+                    <strong>{user?.name}</strong> {humanizeEvent(event)}
+                  </div>
+                  <div>{new Date(event.timestamp).toLocaleString()}</div>
+                </div>
+              );
+            })}
+
+          {evidenceEvents.filter((e) => e.projectId === groupId).length ===
+            0 && <p>No activity recorded.</p>}
         </div>
       )}
     </div>
