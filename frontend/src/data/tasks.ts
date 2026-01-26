@@ -6,7 +6,7 @@ export const tasks: Task[] = [
     projectId: "p1",
     title: "Design database schema",
     ownerId: "u1",
-    status: "DONE",
+    status: "APPROVED",
     deadline: "2026-02-05T23:59:59Z",
   },
   {
@@ -22,7 +22,7 @@ export const tasks: Task[] = [
     projectId: "p1",
     title: "Prepare PPT slides",
     ownerId: "u2",
-    status: "CREATED",
+    status: "TODO",
     deadline: "2026-02-09T23:59:59Z",
   },
   {
@@ -30,7 +30,7 @@ export const tasks: Task[] = [
     projectId: "p1",
     title: "Write project report",
     ownerId: "u3",
-    status: "CREATED",
+    status: "AWAITING_APPROVAL",
     deadline: "2026-02-10T23:59:59Z",
   },
 ];

@@ -30,7 +30,12 @@ export type ProjectMember = {
    TASKS
    ========================= */
 
-export type TaskStatus = "CREATED" | "IN_PROGRESS" | "DONE";
+export type TaskStatus =
+  | "TODO"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "AWAITING_APPROVAL"
+  | "APPROVED";
 
 export type Task = {
   id: string;

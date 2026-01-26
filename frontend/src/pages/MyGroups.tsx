@@ -20,12 +20,12 @@ export default function MyGroups() {
         const groupTasks = tasks.filter((t) => t.projectId === group.id);
 
         const pendingTasks = groupTasks.filter(
-          (t) => t.status !== "DONE",
+          (t) => t.status !== "COMPLETED",
         ).length;
 
         const overdueTasks = groupTasks.filter(
           (t) =>
-            t.status !== "DONE" &&
+            t.status !== "COMPLETED" &&
             t.deadline &&
             new Date(t.deadline) < new Date(),
         ).length;

@@ -9,14 +9,14 @@ export default function Dashboard() {
     (task) =>
       task.deadline &&
       new Date(task.deadline) < new Date() &&
-      task.status !== "DONE",
+      task.status !== "COMPLETED",
   );
 
   const upComingTask = myTask.filter(
     (task) =>
       task.deadline &&
       new Date(task.deadline) >= new Date() &&
-      task.status !== "DONE",
+      task.status !== "COMPLETED",
   );
 
   return (
