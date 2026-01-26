@@ -6,6 +6,7 @@ import MyTasks from "./pages/MyTasks";
 import MyGroups from "./pages/MyGroups";
 import Activity from "./pages/Activity";
 import Scores from "./pages/Scores";
+import GroupDetails from "./pages/GroupDetails";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/groups" element={<MyGroups />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/scores" element={<Scores />} />
+          <Route path="/groups/:groupId" element={<GroupDetails />} />
         </Route>
       </Routes>
     </BrowserRouter>

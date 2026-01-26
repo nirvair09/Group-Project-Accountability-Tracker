@@ -12,5 +12,11 @@ export default function TaskCard({ task }: { task: Task }) {
     new Date(task.deadline) < new Date() &&
     task.status !== "DONE";
 
-  return <div>TaskCArd;</div>;
+  return (
+    <div>
+      <h3>{task.title}</h3>
+      <p>{task.deadline}</p>
+      <p>Status: {task.status}</p>
+    </div>
+  );
 }
