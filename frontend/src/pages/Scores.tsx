@@ -15,15 +15,30 @@ export default function Scores() {
     getProjects(token).then(async (projects) => {
         const scores = await Promise.all(projects.map(async (p: any) => {
             const tasks = await getTasksByProject(p.projectid, token);
-            const myTasks = tasks.filter((t: any) => t.ownerid === user?.id);
-            const approved = myTasks.filter((t: any) => t.status === 'APPROVED');
-            const percentage = myTasks.length > 0 ? Math.round((approved.length / myTasks.length) * 100) : 0;
+            // Calculate scores for ALL members in this project (per project wise)
+            const membersMap: Record<string, any> = {};
+            
+            // First, get all members for this project to ensure everyone is listed even with 0 tasks
+            // For now, we'll derive members from tasks and current user
+            const membersInProject = Array.from(new Set(tasks.map((t: any) => t.ownerid)));
+            if (!membersInProject.includes(user?.id)) membersInProject.push(user?.id);
+
+            const projectMembersScores = membersInProject.map(memberId => {
+                const memberTasks = tasks.filter((t: any) => t.ownerid === memberId);
+                const approved = memberTasks.filter((t: any) => t.status === 'APPROVED');
+                const score = memberTasks.length > 0 ? Math.round((approved.length / memberTasks.length) * 100) : 0;
+                return {
+                    memberId,
+                    total: memberTasks.length,
+                    approved: approved.length,
+                    score
+                };
+            });
+
             return {
                 id: p.projectid,
                 name: p.name,
-                total: myTasks.length,
-                approved: approved.length,
-                score: percentage
+                members: projectMembersScores
             };
         }));
         setProjectScores(scores);
@@ -34,50 +49,35 @@ export default function Scores() {
 
   if (loading) return <p style={{ padding: "20px" }}>Calculating scores...</p>;
 
-  const averageScore = projectScores.length > 0 
-    ? Math.round(projectScores.reduce((acc, curr) => acc + curr.score, 0) / projectScores.length)
-    : 0;
-
   return (
     <div style={{ padding: "20px", maxWidth: "1000px", margin: "0 auto" }}>
-      <h1>My Accountability Scores</h1>
+      <h1>Project Accountability Scores</h1>
+      <p style={{ color: "#666" }}>Performance breakdown for all members across your projects.</p>
 
-      <div style={{ 
-          padding: "30px", 
-          backgroundColor: "#f8f9fa", 
-          borderRadius: "15px", 
-          textAlign: "center", 
-          marginBottom: "30px",
-          border: "1px solid #dee2e6"
-      }}>
-          <div style={{ fontSize: "1.2em", color: "#666", marginBottom: "5px" }}>Overall GPA</div>
-          <div style={{ fontSize: "4em", fontWeight: "bold", color: "#007bff" }}>{averageScore}%</div>
-          <p style={{ color: "#666" }}>Based on your performance in {projectScores.length} projects</p>
-      </div>
-
-      <h2>Project Detail</h2>
       {projectScores.length === 0 ? (
-          <p>No project data available.</p>
+          <div style={{ padding: "50px", textAlign: "center", border: "1px dashed #ccc", borderRadius: "10px", color: "#666" }}>
+              You are not in any projects yet.
+          </div>
       ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-              {projectScores.map(ps => (
-                  <div key={ps.id} style={{ padding: "20px", border: "1px solid #eee", borderRadius: "10px", backgroundColor: "white" }}>
-                      <h3 style={{ margin: "0 0 10px 0" }}>{ps.name}</h3>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                              <div style={{ fontSize: "1.5em", fontWeight: "bold" }}>{ps.score}%</div>
-                              <div style={{ fontSize: "0.8em", color: "#666" }}>{ps.approved} / {ps.total} tasks approved</div>
-                          </div>
-                          <div style={{ width: "60px", height: "60px", borderRadius: "50%", border: "5px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                                <div style={{ 
-                                    position: "absolute", 
-                                    inset: "-5px", 
-                                    borderRadius: "50%", 
-                                    border: `5px solid ${ps.score >= 70 ? "#28a745" : ps.score >= 40 ? "#ffc107" : "#dc3545"}`,
-                                    clipPath: `inset(0 0 0 0)` // Simple solid for now
-                                }}></div>
-                                <span style={{ fontSize: "0.8em", fontWeight: "bold" }}>{ps.score}</span>
-                          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "30px", marginTop: "20px" }}>
+              {projectScores.map(project => (
+                  <div key={project.id} style={{ padding: "25px", border: "1px solid #dee2e6", borderRadius: "12px", backgroundColor: "white", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+                      <h2 style={{ margin: "0 0 20px 0", color: "#007bff", borderBottom: "2px solid #f8f9fa", paddingBottom: "10px" }}>{project.name}</h2>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "20px" }}>
+                          {project.members.map((m: any) => (
+                              <div key={m.memberId} style={{ padding: "15px", border: "1px solid #f0f0f0", borderRadius: "8px", backgroundColor: "#fdfdfd" }}>
+                                  <div style={{ fontWeight: "bold", marginBottom: "10px", display: "flex", justifyContent: "space-between" }}>
+                                      <span>{m.memberId === user?.id ? "Me" : `User (${m.memberId.slice(0,4)})`}</span>
+                                      <span style={{ color: m.score >= 70 ? "#28a745" : m.score >= 40 ? "#ffc107" : "#dc3545" }}>{m.score}%</span>
+                                  </div>
+                                  <div style={{ height: "6px", backgroundColor: "#eee", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
+                                      <div style={{ width: `${m.score}%`, height: "100%", backgroundColor: m.score >= 70 ? "#28a745" : m.score >= 40 ? "#ffc107" : "#dc3545" }}></div>
+                                  </div>
+                                  <div style={{ fontSize: "0.8em", color: "#888" }}>
+                                      {m.approved} of {m.total} tasks approved
+                                  </div>
+                              </div>
+                          ))}
                       </div>
                   </div>
               ))}

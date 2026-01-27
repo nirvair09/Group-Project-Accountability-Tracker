@@ -1,7 +1,7 @@
 import { useAuth } from "../auth/AuthContext";
 import { useState, useEffect } from "react";
 import { getProjects } from "../api/projectsApi";
-import { getMyTasks, updateTaskStatus } from "../api/tasksApi";
+import { getMyTasks, updateTaskStatus, approveTask } from "../api/tasksApi";
 import { Link } from "react-router-dom";
 
 export default function Dashboard() {
@@ -34,6 +34,16 @@ export default function Dashboard() {
       getMyTasks(token).then(setTasks);
     } catch (error) {
       console.error("Failed to update status:", error);
+    }
+  };
+
+  const handleApprove = async (taskId: string) => {
+    if (!token) return;
+    try {
+      await approveTask(taskId, token);
+      getMyTasks(token).then(setTasks);
+    } catch (error) {
+      console.error("Failed to approve:", error);
     }
   };
 
@@ -98,6 +108,14 @@ export default function Dashboard() {
                                         style={{ padding: "4px 12px", cursor: "pointer", borderRadius: "4px", backgroundColor: "#28a745", color: "white", border: "none" }}
                                     >
                                         Mark Done
+                                    </button>
+                                )}
+                                {task.projectownerid === user?.id && task.status === "DONE" && (
+                                    <button 
+                                        onClick={() => handleApprove(task.taskid)}
+                                        style={{ padding: "4px 12px", cursor: "pointer", borderRadius: "4px", backgroundColor: "#6c757d", color: "white", border: "none" }}
+                                    >
+                                        Approve Task
                                     </button>
                                 )}
                             </div>

@@ -78,7 +78,11 @@ export async function getMyTasks(req: AuthRequest, res: Response) {
 
 export async function approveTaskController(req: AuthRequest, res: Response) {
   try {
-    await taskService.approveTask(req.params.id);
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+    await taskService.approveTask(req.params.id, userId);
     res.json({ message: "Task approved successfully" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

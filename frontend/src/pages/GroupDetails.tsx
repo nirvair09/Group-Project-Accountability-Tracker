@@ -375,31 +375,44 @@ export default function GroupDetail() {
         <div>
           <h2>Group Activity</h2>
           {activity.length === 0 ? (
-            <p style={{ color: "#666", fontStyle: "italic" }}>No activity recorded yet.</p>
+            <p style={{ color: "#666", fontStyle: "italic" }}>No activity recorded yet for this project.</p>
           ) : (
-            <div style={{ borderLeft: "2px solid #007bff", paddingLeft: "20px" }}>
-              {activity.map((event) => (
-                <div key={event.event_id} style={{ marginBottom: "20px", position: "relative" }}>
-                   <div style={{ 
-                       position: "absolute", 
-                       left: "-26px", 
-                       top: "5px", 
-                       width: "10px", 
-                       height: "10px", 
-                       borderRadius: "50%", 
-                       backgroundColor: "#007bff" 
-                   }}></div>
-                   <div style={{ fontSize: "0.9em", color: "#333" }}>
-                       <strong>{event.username || "System"}</strong> 
-                       {event.type === 'TASK_CREATED' && ` created task: ${event.metadata?.title}`}
-                       {event.type === 'TASK_STATUS_CHANGED' && ` changed task status to ${event.metadata?.to}`}
-                       {event.type === 'TASK_APPROVED' && ` approved a task.`}
-                   </div>
-                   <div style={{ fontSize: "0.75em", color: "#999" }}>
-                       {new Date(event.timestamp).toLocaleString()}
-                   </div>
-                </div>
-              ))}
+            <div style={{ borderLeft: "2px solid #007bff", paddingLeft: "20px", marginTop: "20px" }}>
+              {activity.map((event) => {
+                const date = new Date(event.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = date.toLocaleDateString();
+
+                return (
+                    <div key={event.event_id} style={{ marginBottom: "25px", position: "relative" }}>
+                       <div style={{ 
+                           position: "absolute", 
+                           left: "-26px", 
+                           top: "5px", 
+                           width: "12px", 
+                           height: "12px", 
+                           borderRadius: "50%", 
+                           backgroundColor: "#007bff",
+                           border: "2px solid white"
+                       }}></div>
+                       <div style={{ fontSize: "1em", color: "#333" }}>
+                           <strong style={{ color: "#007bff" }}>{event.username || "System"}</strong> 
+                           {event.type === 'TASK_CREATED' && (
+                               <span> created a new task: <strong style={{color: '#555'}}>{event.metadata?.taskTitle || event.metadata?.title || "Unnamed Task"}</strong></span>
+                           )}
+                           {event.type === 'TASK_STATUS_CHANGED' && (
+                               <span> updated <strong style={{color: '#555'}}>{event.metadata?.taskTitle || "a task"}</strong> from <em>{event.metadata?.from}</em> to <strong style={{color: '#28a745'}}>{event.metadata?.to}</strong></span>
+                           )}
+                           {event.type === 'TASK_APPROVED' && (
+                               <span> <strong style={{color: '#28a745'}}>approved</strong> the task: <strong style={{color: '#555'}}>{event.metadata?.taskTitle || "the task"}</strong></span>
+                           )}
+                       </div>
+                       <div style={{ fontSize: "0.8em", color: "#999", marginTop: "4px" }}>
+                           {dateStr} at {timeStr}
+                       </div>
+                    </div>
+                );
+              })}
             </div>
           )}
         </div>

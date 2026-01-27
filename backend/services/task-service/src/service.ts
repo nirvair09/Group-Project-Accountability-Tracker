@@ -34,7 +34,7 @@ export async function updateTaskStatus(
   status: "IN_PROGRESS" | "DONE" | "CANCELLED",
 ) {
   const res = await pool.query(
-    `SELECT ownerId,projectId ,status FROM tasks where taskId=$1`,
+    `SELECT ownerId, projectId, status, title FROM tasks WHERE taskId=$1`,
     [taskId],
   );
 
@@ -62,7 +62,12 @@ export async function updateTaskStatus(
     user_id: userId,
     type: "TASK_STATUS_CHANGED",
     source: "task-service",
-    metadata: { taskId, from: task.status, to: status },
+    metadata: { 
+      taskId, 
+      from: task.status, 
+      to: status,
+      taskTitle: task.title // Added title for better logs
+    },
   });
 }
 
@@ -76,7 +81,7 @@ export async function listTask(projectId: string) {
 
 export async function listUserTasks(userId: string) {
   const res = await pool.query(
-    `SELECT t.*, p.name as projectName 
+    `SELECT t.*, p.name as projectName, p.ownerId as projectOwnerId
      FROM tasks t
      JOIN projects p ON t.projectId = p.projectId
      WHERE t.ownerId=$1 
@@ -85,9 +90,9 @@ export async function listUserTasks(userId: string) {
   );
   return res.rows;
 }
-export async function approveTask(taskId: string) {
+export async function approveTask(taskId: string, userId: string) {
   const res = await pool.query(
-    `SELECT projectId, status FROM tasks WHERE taskId=$1`,
+    `SELECT projectId, status, title FROM tasks WHERE taskId=$1`,
     [taskId],
   );
 
@@ -103,10 +108,10 @@ export async function approveTask(taskId: string) {
 
   await recordEvent({
     project_id: task.projectid,
-    user_id: "SYSTEM", 
-    type: "TASK_APPROVED",
+    user_id: userId, 
+    type: "TASK_APPROVED" as any, 
     source: "task-service",
-    metadata: { taskId },
+    metadata: { taskId, taskTitle: task.title },
   });
 }
 
