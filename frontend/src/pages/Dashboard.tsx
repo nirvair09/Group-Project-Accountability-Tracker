@@ -13,6 +13,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!token) return;
     
+    setLoading(true);
     Promise.all([
         getProjects(token),
         getMyTasks(token)
@@ -36,67 +37,99 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p style={{ padding: "20px" }}>Loading Dashboard...</p>;
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
       <h1>Dashboard</h1>
       
-      <section style={{ marginBottom: "30px" }}>
-        <h2>Welcome, {user?.name}!</h2>
-        <p>Email: {user?.email}</p>
+      <section style={{ marginBottom: "30px", padding: "20px", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
+        <h2>Welcome back, {user?.name}! 👋</h2>
+        <p style={{ color: "#666" }}>You have <strong>{tasks.filter(t => t.status !== 'APPROVED' && t.status !== 'CANCELLED').length}</strong> active tasks requiring your attention.</p>
       </section>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "25px" }}>
         <section>
-            <h2>My Tasks (Assigned to Me)</h2>
-            {tasks.length === 0 && <p>No tasks assigned to you yet.</p>}
-            {tasks.map((task) => {
-                const isOverdue =
-                task.deadline &&
-                new Date(task.deadline) < new Date() &&
-                task.status !== "APPROVED";
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+                <h2 style={{ margin: 0 }}>My Tasks</h2>
+                <Link to="/tasks" style={{ fontSize: "0.9em", color: "#007bff", textDecoration: "none" }}>Show all</Link>
+            </div>
+            
+            {tasks.length === 0 ? (
+                <div style={{ padding: "30px", textAlign: "center", border: "1px dashed #ccc", borderRadius: "8px", color: "#666" }}>
+                    No tasks assigned to you yet.
+                </div>
+            ) : (
+                tasks.map((task) => {
+                    const isOverdue =
+                    task.deadline &&
+                    new Date(task.deadline) < new Date() &&
+                    task.status !== "APPROVED";
 
-                return (
-                    <div key={task.taskid} style={{ border: "1px solid #ccc", padding: "15px", marginBottom: "10px", borderRadius: "5px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <strong>{task.title}</strong>
-                            <span style={{ fontSize: "0.8em", color: "#666" }}>{task.projectname}</span>
-                        </div>
-                        <div>Status: {task.status}</div>
-                        
-                        {task.deadline && (
-                        <div style={{ fontSize: "0.9em" }}>
-                            Deadline: {new Date(task.deadline).toLocaleDateString()}
-                            {isOverdue && <span style={{ color: "red" }}> (OVERDUE)</span>}
-                        </div>
-                        )}
+                    return (
+                        <div key={task.taskid} style={{ border: "1px solid #ccc", padding: "15px", marginBottom: "10px", borderRadius: "5px", backgroundColor: "white" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                                <strong>{task.title}</strong>
+                                <span style={{ fontSize: "0.75em", color: "#666", padding: "2px 6px", backgroundColor: "#f0f0f0", borderRadius: "4px" }}>
+                                    {task.projectname}
+                                </span>
+                            </div>
+                            <div style={{ fontSize: "0.9em", color: "#666" }}>Status: {task.status}</div>
+                            
+                            {task.deadline && (
+                            <div style={{ fontSize: "0.85em", marginTop: "5px", color: isOverdue ? "red" : "#666" }}>
+                                Deadline: {new Date(task.deadline).toLocaleDateString()}
+                                {isOverdue && <strong> (OVERDUE)</strong>}
+                            </div>
+                            )}
 
-                        <div style={{ marginTop: "10px" }}>
-                            {task.status === "CREATED" && (
-                                <button onClick={() => handleStatusChange(task.taskid, "IN_PROGRESS")}>Start</button>
-                            )}
-                            {task.status === "IN_PROGRESS" && (
-                                <button onClick={() => handleStatusChange(task.taskid, "DONE")}>Complete</button>
-                            )}
+                            <div style={{ marginTop: "12px", display: "flex", gap: "5px" }}>
+                                {task.status === "CREATED" && (
+                                    <button 
+                                        onClick={() => handleStatusChange(task.taskid, "IN_PROGRESS")}
+                                        style={{ padding: "4px 12px", cursor: "pointer", borderRadius: "4px", backgroundColor: "#007bff", color: "white", border: "none" }}
+                                    >
+                                        Start
+                                    </button>
+                                )}
+                                {task.status === "IN_PROGRESS" && (
+                                    <button 
+                                        onClick={() => handleStatusChange(task.taskid, "DONE")}
+                                        style={{ padding: "4px 12px", cursor: "pointer", borderRadius: "4px", backgroundColor: "#28a745", color: "white", border: "none" }}
+                                    >
+                                        Mark Done
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                );
-            })}
+                    );
+                })
+            )}
         </section>
 
         <section>
-            <h2>My Project Groups</h2>
-            {projects.length === 0 && <p>You are not in any groups yet.</p>}
-            {projects.map((project) => (
-            <div key={project.projectid} style={{ border: "1px solid #eee", padding: "15px", marginBottom: "10px", borderRadius: "5px" }}>
-                <strong>
-                    <Link to={`/groups/${project.projectid}`}>{project.name}</Link>
-                </strong>
-                <div style={{ fontSize: "0.9em", color: "#666" }}>Role: {project.role}</div>
-                <div style={{ fontSize: "0.8em" }}>Created: {new Date(project.createdat).toLocaleDateString()}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+                <h2 style={{ margin: 0 }}>My Project Groups</h2>
+                <Link to="/groups" style={{ fontSize: "0.9em", color: "#007bff", textDecoration: "none" }}>Manage</Link>
             </div>
-            ))}
+
+            {projects.length === 0 ? (
+                <div style={{ padding: "30px", textAlign: "center", border: "1px dashed #ccc", borderRadius: "8px", color: "#666" }}>
+                    You are not in any groups yet.
+                </div>
+            ) : (
+                projects.map((project) => (
+                <div key={project.projectid} style={{ border: "1px solid #eee", padding: "15px", marginBottom: "10px", borderRadius: "5px", backgroundColor: "white" }}>
+                    <div style={{ marginBottom: "5px" }}>
+                        <Link to={`/groups/${project.projectid}`} style={{ fontWeight: "bold", color: "#007bff", textDecoration: "none" }}>
+                            {project.name}
+                        </Link>
+                    </div>
+                    <div style={{ fontSize: "0.85em", color: "#666" }}>Role: {project.role}</div>
+                    <div style={{ fontSize: "0.75em", color: "#999", marginTop: "5px" }}>Created: {new Date(project.createdat).toLocaleDateString()}</div>
+                </div>
+                ))
+            )}
         </section>
       </div>
     </div>

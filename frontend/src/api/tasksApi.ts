@@ -10,6 +10,22 @@ export function getTasksByProject(projectId: string, token: string) {
   );
 }
 
+export function getProjectActivity(projectId: string, token: string) {
+    return apiFetch(
+      `${BASE}/projects/${projectId}/activity`,
+      {},
+      token
+    );
+}
+
+export function getAllActivity(token: string) {
+    return apiFetch(
+      `${BASE}/activity`,
+      {},
+      token
+    );
+}
+
 export function getMyTasks(token: string) {
     return apiFetch(
       `${BASE}/tasks/mine`,

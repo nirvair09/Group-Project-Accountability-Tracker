@@ -75,3 +75,34 @@ export async function getMyTasks(req: AuthRequest, res: Response) {
       res.status(500).json({ error: error.message });
     }
 }
+
+export async function approveTaskController(req: AuthRequest, res: Response) {
+  try {
+    await taskService.approveTask(req.params.id);
+    res.json({ message: "Task approved successfully" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function getProjectActivityController(req: AuthRequest, res: Response) {
+  try {
+    const activity = await taskService.getProjectActivity(req.params.projectId);
+    res.json(activity);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function getAllActivityController(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const activity = await taskService.getAllUserActivity(userId);
+    res.json(activity);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}

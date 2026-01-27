@@ -10,6 +10,12 @@ router.patch("/tasks/:id/status", authenticate, controller.updateTaskStatusContr
 
 router.get("/projects/:projectId/tasks", authenticate, controller.getTask);
 
+router.get("/projects/:projectId/activity", authenticate, controller.getProjectActivityController);
+
+router.get("/activity", authenticate, controller.getAllActivityController);
+
 router.get("/tasks/mine", authenticate, controller.getMyTasks);
+
+router.patch("/tasks/:id/approve", authenticate, controller.approveTaskController);
 
 export default router;

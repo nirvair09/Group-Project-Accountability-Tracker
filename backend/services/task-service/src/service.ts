@@ -18,6 +18,14 @@ export async function createTask(data: {
         VALUES ($1,$2,$3,$4,'CREATED',$5)`,
     [taskId, data.projectId, data.ownerId, data.title, data.deadline ? data.deadline : null],
   );
+
+  await recordEvent({
+    project_id: data.projectId,
+    user_id: data.ownerId,
+    type: "TASK_CREATED",
+    source: "task-service",
+    metadata: { taskId, title: data.title },
+  });
 }
 
 export async function updateTaskStatus(
@@ -73,6 +81,57 @@ export async function listUserTasks(userId: string) {
      JOIN projects p ON t.projectId = p.projectId
      WHERE t.ownerId=$1 
      ORDER BY t.createdAt DESC`,
+    [userId],
+  );
+  return res.rows;
+}
+export async function approveTask(taskId: string) {
+  const res = await pool.query(
+    `SELECT projectId, status FROM tasks WHERE taskId=$1`,
+    [taskId],
+  );
+
+  if (res.rowCount === 0) {
+    throw new Error("Task not found");
+  }
+
+  const task = res.rows[0];
+
+  await pool.query(`UPDATE tasks SET status = 'APPROVED' WHERE taskId=$1`, [
+    taskId,
+  ]);
+
+  await recordEvent({
+    project_id: task.projectid,
+    user_id: "SYSTEM", 
+    type: "TASK_APPROVED",
+    source: "task-service",
+    metadata: { taskId },
+  });
+}
+
+export async function getProjectActivity(projectId: string) {
+  const res = await pool.query(
+    `SELECT e.*, u.name as userName 
+     FROM evidence_events e
+     LEFT JOIN users u ON e.user_id = u.id
+     WHERE e.project_id = $1
+     ORDER BY e.timestamp DESC`,
+    [projectId],
+  );
+  return res.rows;
+}
+
+export async function getAllUserActivity(userId: string) {
+  const res = await pool.query(
+    `SELECT e.*, u.name as userName, p.name as projectName
+     FROM evidence_events e
+     LEFT JOIN users u ON e.user_id = u.id
+     JOIN projects p ON e.project_id = p.projectId
+     JOIN project_members pm ON p.projectId = pm.projectId
+     WHERE pm.userId = $1
+     ORDER BY e.timestamp DESC
+     LIMIT 50`,
     [userId],
   );
   return res.rows;

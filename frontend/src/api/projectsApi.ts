@@ -36,3 +36,7 @@ export function addProjectMember(
 export function getProjectMembers(projectId: string, token: string) {
   return apiFetch(`${BASE}/projects/${projectId}/members`, {}, token);
 }
+
+export function getProjectById(projectId: string, token: string) {
+    return apiFetch(`${BASE}/projects/${projectId}`, {}, token);
+}

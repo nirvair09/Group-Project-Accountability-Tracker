@@ -30,6 +30,16 @@ router.post("/projects", authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Get project by ID
+router.get("/projects/:projectId", authenticate, async (req: AuthRequest, res) => {
+  try {
+    const project = await projectService.getProjectById(req.params.projectId);
+    res.json(project);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Add member to project
 router.post("/projects/:projectId/members", authenticate, async (req: AuthRequest, res) => {
   try {

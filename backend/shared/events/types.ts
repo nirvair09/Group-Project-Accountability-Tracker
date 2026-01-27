@@ -1,6 +1,7 @@
 export type EvidenceEventType =
   | "TASK_CREATED"
   | "TASK_STATUS_CHANGED"
+  | "TASK_APPROVED"
   | "FILE_UPLOADED"
   | "COMMENT_ADDED"
   | "PEER_REVIEW_SUBMITTED";
