@@ -1,51 +1,42 @@
-import TaskCard from "../components/TaskCard";
-import { tasks } from "../data/tasks";
-import { CURRENT_USER_ID } from "../constants/currentUser";
+import { useAuth } from "../auth/AuthContext";
+import { useState, useEffect } from "react";
+import { getProjects } from "../api/projectsApi";
 
 export default function Dashboard() {
-  const myTask = tasks.filter((task) => task.ownerId === CURRENT_USER_ID);
+  const { token, user } = useAuth();
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const overDueTasks = myTask.filter(
-    (task) =>
-      task.deadline &&
-      new Date(task.deadline) < new Date() &&
-      task.status !== "COMPLETED",
-  );
+  useEffect(() => {
+    if (!token) return;
+    
+    getProjects(token)
+      .then(setProjects)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [token]);
 
-  const upComingTask = myTask.filter(
-    (task) =>
-      task.deadline &&
-      new Date(task.deadline) >= new Date() &&
-      task.status !== "COMPLETED",
-  );
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div>
-      {overDueTasks.length > 0 && (
-        <section>
-          <h2>Overdue Tasks</h2>
-          {overDueTasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </section>
-      )}
-
+      <h1>Dashboard</h1>
+      
       <section>
-        <h1>My Tasks</h1>
-        {myTask.length === 0 && <p>No task assigned to you</p>}
-        {myTask.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
+        <h2>Welcome, {user?.name}!</h2>
+        <p>Email: {user?.email}</p>
       </section>
 
-      {upComingTask.length > 0 && (
-        <section>
-          <h2>Upcoming Tasks</h2>
-          {upComingTask.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </section>
-      )}
+      <section>
+        <h2>Your Projects</h2>
+        {projects.length === 0 && <p>No projects yet</p>}
+        {projects.map((project) => (
+          <div key={project.projectid} style={{ marginBottom: "10px" }}>
+            <strong>{project.name}</strong>
+            <div>Created: {new Date(project.createdat).toLocaleDateString()}</div>
+          </div>
+        ))}
+      </section>
     </div>
   );
 }

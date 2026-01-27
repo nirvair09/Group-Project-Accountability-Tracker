@@ -1,45 +1,98 @@
-import { projects } from "../data/projects";
-import { projectMembers } from "../data/projectMembers";
-import { tasks } from "../data/tasks";
-import { CURRENT_USER_ID } from "../constants/currentUser";
+import { useAuth } from "../auth/AuthContext";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { getProjects, createProject } from "../api/projectsApi";
 
 export default function MyGroups() {
-  const myGroupIds = projectMembers
-    .filter((m) => m.userId === CURRENT_USER_ID)
-    .map((m) => m.projectId);
-  const myGroups = projects.filter((m) => myGroupIds.includes(m.id));
+  const { token } = useAuth();
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+    loadProjects();
+  }, [token]);
+
+  const loadProjects = () => {
+    if (!token) return;
+    getProjects(token)
+      .then(setProjects)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  const handleCreateProject = async () => {
+    if (!token || !newProjectName.trim()) return;
+    
+    try {
+      await createProject(newProjectName, token);
+      setNewProjectName("");
+      setShowCreateForm(false);
+      loadProjects();
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      alert("Failed to create project: " + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
-    <div>
-      <h1>My Groups</h1>
+    <div style={{ padding: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>My Groups</h1>
+        <button 
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          style={{ padding: "10px 20px", cursor: "pointer" }}
+        >
+          {showCreateForm ? "Cancel" : "+ Create New Group"}
+        </button>
+      </div>
 
-      {myGroups.length === 0 && <p>You are not a member of any Group so far</p>}
+      {showCreateForm && (
+        <div style={{ margin: "20px 0", padding: "15px", border: "1px solid #ccc", borderRadius: "5px" }}>
+          <h3>Create New Project Group</h3>
+          <input
+            type="text"
+            placeholder="Project name"
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            style={{ padding: "8px", width: "300px", marginRight: "10px" }}
+          />
+          <button 
+            onClick={handleCreateProject}
+            style={{ padding: "8px 20px", cursor: "pointer" }}
+          >
+            Create
+          </button>
+        </div>
+      )}
 
-      {myGroups.map((group) => {
-        const groupTasks = tasks.filter((t) => t.projectId === group.id);
+      {projects.length === 0 && <p>You are not a member of any Group so far</p>}
 
-        const pendingTasks = groupTasks.filter(
-          (t) => t.status !== "COMPLETED",
-        ).length;
-
-        const overdueTasks = groupTasks.filter(
-          (t) =>
-            t.status !== "COMPLETED" &&
-            t.deadline &&
-            new Date(t.deadline) < new Date(),
-        ).length;
-
-        return (
-          <div key={group.id}>
-            <h3>
-              <Link to={`/groups/${group.id}`}>{group.name}</Link>
-            </h3>
-            <p>Pending Tasks: {pendingTasks}</p>
-            <p>Overdue Tasks: {overdueTasks}</p>
-          </div>
-        );
-      })}
+      <div style={{ marginTop: "20px" }}>
+        {projects.map((group) => {
+          return (
+            <div 
+              key={group.projectid} 
+              style={{ 
+                border: "1px solid #ddd", 
+                padding: "15px", 
+                marginBottom: "10px",
+                borderRadius: "5px"
+              }}
+            >
+              <h3>
+                <Link to={`/groups/${group.projectid}`}>{group.name}</Link>
+              </h3>
+              <p>Role: {group.role}</p>
+              <p>Created: {new Date(group.createdat).toLocaleDateString()}</p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

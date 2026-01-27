@@ -1,249 +1,288 @@
 import { useParams } from "react-router-dom";
-import { useState } from "react";
-import { evidenceEvents } from "../data/evidence";
-import { tasks } from "../data/tasks";
-import { users } from "../data/users";
-import { projects } from "../data/projects";
-import { projectMembers } from "../data/projectMembers";
+import { useState, useEffect } from "react";
+import { useAuth } from "../auth/AuthContext";
+import { getTasksByProject, updateTaskStatus, approveTask, createTask } from "../api/tasksApi";
+import { searchUsers } from "../api/usersApi";
+import { addProjectMember } from "../api/projectsApi";
 
-import type { TaskStatus } from "../types";
-
-/* -----------------------------
-   Constants
------------------------------ */
-
-const STATUS_ORDER: TaskStatus[] = [
-  "TODO",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "AWAITING_APPROVAL",
-  "APPROVED",
-];
-
-type Tab = "TASKS" | "MEMBERS" | "ACTIVITY" | "SCORES";
-
-const TABS: Tab[] = ["TASKS", "MEMBERS", "ACTIVITY", "SCORES"];
-
-/* -----------------------------
-   Component
------------------------------ */
+type Tab = "TASKS" | "MEMBERS" | "ACTIVITY";
+const TABS: Tab[] = ["TASKS", "MEMBERS", "ACTIVITY"];
 
 export default function GroupDetail() {
-  function humanizeEvent(event: any) {
-    switch (event.type) {
-      case "TASK_CREATED":
-        return `created task "${event.metadata?.title}"`;
-
-      case "TASK_STATUS_CHANGED":
-        return `changed task status to ${event.metadata?.to}`;
-
-      case "PROJECT_CREATED":
-        return "created the project";
-
-      case "PROJECT_MEMBER_ADDED":
-        return "added a new member to the group";
-
-      case "MILESTONE_CREATED":
-        return "created a milestone";
-
-      case "PEER_REVIEW_SUBMITTED":
-        return "submitted a peer review";
-
-      default:
-        return event.type;
-    }
-  }
-
   const { groupId } = useParams();
-
-  // Hooks MUST be at the top
+  const { token, user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("TASKS");
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Task creation form
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDeadline, setNewTaskDeadline] = useState("");
+  const [newTaskAssignee, setNewTaskAssignee] = useState("");
+  
+  // Member search
+  const [showMemberForm, setShowMemberForm] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  const project = projects.find((p) => p.id === groupId);
-  const groupTasks = tasks.filter((t) => t.projectId === groupId);
+  // Load tasks
+  useEffect(() => {
+    if (!token || !groupId) return;
+    loadTasks();
+  }, [groupId, token]);
 
-  if (!project) {
-    return <p>Group not found.</p>;
-  }
+  const loadTasks = () => {
+    if (!token || !groupId) return;
+    getTasksByProject(groupId, token)
+      .then(setTasks)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  const handleCreateTask = async () => {
+    if (!token || !groupId || !newTaskTitle.trim()) return;
+    
+    try {
+      await createTask(groupId, newTaskTitle, newTaskDeadline, token);
+      setNewTaskTitle("");
+      setNewTaskDeadline("");
+      setShowTaskForm(false);
+      loadTasks();
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      alert("Failed to create task");
+    }
+  };
+
+  const handleStatusChange = async (taskId: string, status: "IN_PROGRESS" | "DONE" | "CANCELLED") => {
+    if (!token) return;
+    try {
+      await updateTaskStatus(taskId, status, token);
+      loadTasks();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    }
+  };
+
+  const handleApprove = async (taskId: string) => {
+    if (!token) return;
+    try {
+      await approveTask(taskId, token);
+      loadTasks();
+    } catch (error) {
+      console.error("Failed to approve:", error);
+    }
+  };
+
+  const handleSearchUsers = async () => {
+    if (!token || !userSearch.trim()) return;
+    
+    try {
+      const results = await searchUsers(userSearch, token);
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Search failed:", error);
+    }
+  };
+
+  const handleAddMember = async (userId: string) => {
+    if (!token || !groupId) return;
+    
+    try {
+      await addProjectMember(groupId, userId, "MEMBER", token);
+      alert("Member added successfully!");
+      setSearchResults([]);
+      setUserSearch("");
+      setShowMemberForm(false);
+    } catch (error) {
+      console.error("Failed to add member:", error);
+      alert("Failed to add member");
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       {/* Tabs */}
-      <div>
+      <div style={{ marginBottom: "20px" }}>
         {TABS.map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)}>
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              fontWeight: activeTab === tab ? "bold" : "normal",
+              margin: "5px",
+              padding: "10px 20px",
+              cursor: "pointer"
+            }}
+          >
             {tab}
           </button>
         ))}
       </div>
 
-      <h1>{project.name}</h1>
+      <h1>Group Details</h1>
 
-      {/* =====================
-          TASKS TAB
-         ===================== */}
+      {/* TASKS TAB */}
       {activeTab === "TASKS" && (
         <>
-          <h2>Tasks</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h2>Tasks</h2>
+            <button 
+              onClick={() => setShowTaskForm(!showTaskForm)}
+              style={{ padding: "10px 20px", cursor: "pointer" }}
+            >
+              {showTaskForm ? "Cancel" : "+ Create Task"}
+            </button>
+          </div>
 
-          {STATUS_ORDER.map((status) => {
-            const tasksByStatus = groupTasks.filter((t) => t.status === status);
+          {showTaskForm && (
+            <div style={{ margin: "20px 0", padding: "15px", border: "1px solid #ccc", borderRadius: "5px" }}>
+              <h3>Create New Task</h3>
+              <div style={{ marginBottom: "10px" }}>
+                <input
+                  type="text"
+                  placeholder="Task title"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  style={{ padding: "8px", width: "300px", marginRight: "10px" }}
+                />
+              </div>
+              <div style={{ marginBottom: "10px" }}>
+                <input
+                  type="datetime-local"
+                  value={newTaskDeadline}
+                  onChange={(e) => setNewTaskDeadline(e.target.value)}
+                  style={{ padding: "8px", marginRight: "10px" }}
+                />
+              </div>
+              <button 
+                onClick={handleCreateTask}
+                style={{ padding: "8px 20px", cursor: "pointer" }}
+              >
+                Create Task
+              </button>
+            </div>
+          )}
+          
+          {tasks.length === 0 && <p>No tasks yet</p>}
 
-            if (tasksByStatus.length === 0) return null;
+          {tasks.map((task) => {
+            const isOverdue =
+              task.deadline &&
+              new Date(task.deadline) < new Date() &&
+              task.status !== "APPROVED";
 
             return (
-              <div key={status}>
-                <h3>{status.replace("_", " ")}</h3>
+              <div key={task.taskid} style={{ border: "1px solid #ccc", padding: "15px", margin: "10px 0", borderRadius: "5px" }}>
+                <strong>{task.title}</strong>
+                <div>Status: {task.status}</div>
+                <div>Owner: {task.ownerid}</div>
+                
+                {task.deadline && (
+                  <div>
+                    Deadline: {new Date(task.deadline).toLocaleDateString()}
+                    {isOverdue && <span style={{ color: "red" }}> (OVERDUE)</span>}
+                  </div>
+                )}
 
-                {tasksByStatus.map((task) => {
-                  const owner = users.find((u) => u.id === task.ownerId);
+                {/* Action buttons */}
+                <div style={{ marginTop: "10px" }}>
+                  {task.ownerid === user?.id && task.status === "CREATED" && (
+                    <button 
+                      onClick={() => handleStatusChange(task.taskid, "IN_PROGRESS")}
+                      style={{ marginRight: "5px", padding: "5px 10px", cursor: "pointer" }}
+                    >
+                      Start Task
+                    </button>
+                  )}
+                  
+                  {task.ownerid === user?.id && task.status === "IN_PROGRESS" && (
+                    <button 
+                      onClick={() => handleStatusChange(task.taskid, "DONE")}
+                      style={{ marginRight: "5px", padding: "5px 10px", cursor: "pointer" }}
+                    >
+                      Mark as Done
+                    </button>
+                  )}
 
-                  const isOverdue =
-                    task.deadline &&
-                    new Date(task.deadline) < new Date() &&
-                    task.status !== "APPROVED";
-
-                  return (
-                    <div key={task.id}>
-                      <strong>{task.title}</strong>
-                      <div>Owner: {owner?.name}</div>
-
-                      {task.deadline && (
-                        <div>
-                          Deadline:{" "}
-                          {new Date(task.deadline).toLocaleDateString()}
-                          {isOverdue && " (OVERDUE)"}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                  {task.status === "DONE" && (
+                    <button 
+                      onClick={() => handleApprove(task.taskid)}
+                      style={{ padding: "5px 10px", cursor: "pointer", backgroundColor: "#4CAF50", color: "white" }}
+                    >
+                      Approve Task
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
         </>
       )}
 
-      {/* =====================
-          MEMBERS TAB
-         ===================== */}
+      {/* MEMBERS TAB */}
       {activeTab === "MEMBERS" && (
         <div>
-          <h2>Members</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h2>Members</h2>
+            <button 
+              onClick={() => setShowMemberForm(!showMemberForm)}
+              style={{ padding: "10px 20px", cursor: "pointer" }}
+            >
+              {showMemberForm ? "Cancel" : "+ Add Member"}
+            </button>
+          </div>
 
-          {projectMembers
-            .filter((m) => m.projectId === groupId)
-            .map((member) => {
-              const user = users.find((u) => u.id === member.userId);
-
-              const memberTasks = groupTasks.filter(
-                (t) => t.ownerId === member.userId,
-              );
-
-              const completed = memberTasks.filter(
-                (t) => t.status === "APPROVED",
-              ).length;
-
-              const overdue = memberTasks.filter(
-                (t) =>
-                  t.deadline &&
-                  new Date(t.deadline) < new Date() &&
-                  t.status !== "APPROVED",
-              ).length;
-
-              const pending = memberTasks.filter(
-                (t) => t.status !== "APPROVED",
-              ).length;
-
-              return (
-                <div key={member.userId}>
-                  <strong>{user?.name}</strong>
-                  <div>Role: {member.role}</div>
-                  <div>Assigned Tasks: {memberTasks.length}</div>
-                  <div>Completed Tasks: {completed}</div>
-                  <div>Pending Tasks: {pending}</div>
-                  <div>Overdue Tasks: {overdue}</div>
+          {showMemberForm && (
+            <div style={{ margin: "20px 0", padding: "15px", border: "1px solid #ccc", borderRadius: "5px" }}>
+              <h3>Add Member to Group</h3>
+              <div style={{ marginBottom: "10px" }}>
+                <input
+                  type="text"
+                  placeholder="Search by name or email"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  style={{ padding: "8px", width: "300px", marginRight: "10px" }}
+                />
+                <button 
+                  onClick={handleSearchUsers}
+                  style={{ padding: "8px 20px", cursor: "pointer" }}
+                >
+                  Search
+                </button>
+              </div>
+              
+              {searchResults.length > 0 && (
+                <div>
+                  <h4>Search Results:</h4>
+                  {searchResults.map((result) => (
+                    <div key={result.id} style={{ padding: "8px", borderBottom: "1px solid #eee" }}>
+                      <span>{result.name} ({result.email})</span>
+                      <button 
+                        onClick={() => handleAddMember(result.id)}
+                        style={{ marginLeft: "10px", padding: "5px 10px", cursor: "pointer" }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
+              )}
+            </div>
+          )}
+          
+          <p>Member management implemented. Members can be added using the search above.</p>
         </div>
       )}
+
+      {/* ACTIVITY TAB */}
       {activeTab === "ACTIVITY" && (
         <div>
           <h2>Activity</h2>
-
-          {evidenceEvents
-            .filter((e) => e.projectId === groupId)
-            .sort(
-              (a, b) =>
-                new Date(b.timestamp).getTime() -
-                new Date(a.timestamp).getTime(),
-            )
-            .map((event) => {
-              const user = users.find((u) => u.id === event.userId);
-
-              return (
-                <div key={event.id}>
-                  <div>
-                    <strong>{user?.name}</strong> {humanizeEvent(event)}
-                  </div>
-                  <div>{new Date(event.timestamp).toLocaleString()}</div>
-                </div>
-              );
-            })}
-
-          {evidenceEvents.filter((e) => e.projectId === groupId).length ===
-            0 && <p>No activity recorded.</p>}
-        </div>
-      )}
-      {activeTab === "SCORES" && (
-        <div>
-          <h2>Scores</h2>
-
-          {projectMembers
-            .filter((m) => m.projectId === groupId)
-            .map((member) => {
-              const user = users.find((u) => u.id === member.userId);
-
-              const memberTasks = groupTasks.filter(
-                (t) => t.ownerId === member.userId,
-              );
-
-              const assigned = memberTasks.length;
-
-              const approved = memberTasks.filter(
-                (t) => t.status === "APPROVED",
-              ).length;
-
-              const overdue = memberTasks.filter(
-                (t) =>
-                  t.deadline &&
-                  new Date(t.deadline) < new Date() &&
-                  t.status !== "APPROVED",
-              ).length;
-
-              const completionRate = assigned === 0 ? 0 : approved / assigned;
-
-              const overduePenalty = assigned === 0 ? 0 : overdue / assigned;
-
-              let score = completionRate * 100 - overduePenalty * 30;
-
-              score = Math.max(0, Math.min(100, Math.round(score)));
-
-              return (
-                <div key={member.userId}>
-                  <strong>{user?.name}</strong>
-                  <div>Role: {member.role}</div>
-                  <div>Assigned Tasks: {assigned}</div>
-                  <div>Approved Tasks: {approved}</div>
-                  <div>Overdue Tasks: {overdue}</div>
-                  <div>
-                    Completion Rate: {(completionRate * 100).toFixed(0)}%
-                  </div>
-                  <div>Score: {score}</div>
-                </div>
-              );
-            })}
+          <p>Activity log coming soon...</p>
         </div>
       )}
     </div>

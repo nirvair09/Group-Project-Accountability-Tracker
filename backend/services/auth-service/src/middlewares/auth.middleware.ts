@@ -1,8 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../utils/jwt";
 
+export interface AuthRequest extends Request {
+  user?: any;
+  userId?: string;
+}
+
 export const authMiddleware = (
-  req: Request & { user?: any },
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -17,8 +22,13 @@ export const authMiddleware = (
   try {
     const payload = verifyToken(token);
     req.user = payload;
+    req.userId = payload.userId;
     next();
   } catch {
     res.status(401).json({ message: "Invalid token" });
   }
 };
+
+// Alias for compatibility
+export const authenticate = authMiddleware;
+

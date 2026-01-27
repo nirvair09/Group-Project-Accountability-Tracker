@@ -13,7 +13,8 @@ export async function apiFetch(
   });
 
   if (!res.ok) {
-    throw new Error(await res.text());
+    const msg = await res.text();
+    throw new Error(msg);
   }
 
   return res.json();

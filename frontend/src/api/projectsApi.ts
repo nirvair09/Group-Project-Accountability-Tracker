@@ -1,19 +1,33 @@
 import { apiFetch } from "./http";
 
-export function getMyProjects(token: string) {
-  return apiFetch(
-    "http://localhost:4002/projects",
-    {},
-    token
-  );
+const BASE = "http://localhost:4002";
+
+export function getProjects(token: string) {
+  return apiFetch(`${BASE}/projects`, {}, token);
 }
 
 export function createProject(name: string, token: string) {
   return apiFetch(
-    "http://localhost:4002/projects",
+    `${BASE}/projects`,
     {
       method: "POST",
       body: JSON.stringify({ name })
+    },
+    token
+  );
+}
+
+export function addProjectMember(
+  projectId: string,
+  userId: string,
+  role: "MEMBER",
+  token: string
+) {
+  return apiFetch(
+    `${BASE}/projects/${projectId}/members`,
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, role })
     },
     token
   );

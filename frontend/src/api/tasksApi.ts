@@ -1,19 +1,26 @@
 import { apiFetch } from "./http";
 
+const BASE = "http://localhost:4003";
+
 export function getTasksByProject(projectId: string, token: string) {
   return apiFetch(
-    `http://localhost:4003/tasks?projectId=${projectId}`,
+    `${BASE}/tasks?projectId=${projectId}`,
     {},
     token
   );
 }
 
-export function createTask(data: any, token: string) {
+export function createTask(
+  projectId: string,
+  title: string,
+  deadline: string,
+  token: string
+) {
   return apiFetch(
-    "http://localhost:4003/tasks",
+    `${BASE}/tasks`,
     {
       method: "POST",
-      body: JSON.stringify(data)
+      body: JSON.stringify({ projectId, title, deadline })
     },
     token
   );
@@ -21,11 +28,11 @@ export function createTask(data: any, token: string) {
 
 export function updateTaskStatus(
   taskId: string,
-  status: string,
+  status: "IN_PROGRESS" | "DONE" | "CANCELLED",
   token: string
 ) {
   return apiFetch(
-    `http://localhost:4003/tasks/${taskId}/status`,
+    `${BASE}/tasks/${taskId}/status`,
     {
       method: "PATCH",
       body: JSON.stringify({ status })
@@ -36,7 +43,7 @@ export function updateTaskStatus(
 
 export function approveTask(taskId: string, token: string) {
   return apiFetch(
-    `http://localhost:4003/tasks/${taskId}/approve`,
+    `${BASE}/tasks/${taskId}/approve`,
     { method: "PATCH" },
     token
   );
