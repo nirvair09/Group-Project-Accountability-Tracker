@@ -20,3 +20,26 @@ export const registerUser=async(
     );
     return result.rows[0];
 }
+
+
+export const loginUser=async(email:string,password:String)=>{
+    const result=await pool.query(
+        `select * from users where email=$1`,
+        [email]
+
+    );
+
+    if(!result.rowCount){
+        throw new Error("User not found");
+    }
+    const user=result.rows[0];
+    const isPasswordValid=await bcrypt.compare(password,user.password);
+    if(!isPasswordValid){
+        throw new Error("Invalid password");
+    }
+    return {
+        id:user.id,
+        name:user.name,
+        email:user.email
+    };
+};
