@@ -4,23 +4,32 @@ const BASE = "http://localhost:4003";
 
 export function getTasksByProject(projectId: string, token: string) {
   return apiFetch(
-    `${BASE}/tasks?projectId=${projectId}`,
+    `${BASE}/projects/${projectId}/tasks`,
     {},
     token
   );
+}
+
+export function getMyTasks(token: string) {
+    return apiFetch(
+      `${BASE}/tasks/mine`,
+      {},
+      token
+    );
 }
 
 export function createTask(
   projectId: string,
   title: string,
   deadline: string,
-  token: string
+  token: string,
+  ownerId?: string
 ) {
   return apiFetch(
     `${BASE}/tasks`,
     {
       method: "POST",
-      body: JSON.stringify({ projectId, title, deadline })
+      body: JSON.stringify({ projectId, title, deadline, ownerId })
     },
     token
   );

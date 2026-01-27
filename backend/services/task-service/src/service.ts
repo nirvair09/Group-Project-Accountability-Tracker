@@ -16,7 +16,7 @@ export async function createTask(data: {
         
         (taskId,projectId,ownerId,title,status,deadline)
         VALUES ($1,$2,$3,$4,'CREATED',$5)`,
-    [taskId, data.projectId, data.ownerId, data.title, data.deadline || null],
+    [taskId, data.projectId, data.ownerId, data.title, data.deadline ? data.deadline : null],
   );
 }
 
@@ -36,7 +36,7 @@ export async function updateTaskStatus(
 
   const task = res.rows[0];
 
-  if (task.ownerId !== userId) {
+  if (task.ownerid !== userId) {
     throw new Error("Only the task owner can update the status");
   }
 
@@ -44,13 +44,13 @@ export async function updateTaskStatus(
     return;
   }
 
-  await pool.query(`UPDATE task set status = $1 where taskId=$2`, [
+  await pool.query(`UPDATE tasks SET status = $1 WHERE taskId=$2`, [
     status,
     taskId,
   ]);
 
   await recordEvent({
-    project_id: task.project_id,
+    project_id: task.projectid,
     user_id: userId,
     type: "TASK_STATUS_CHANGED",
     source: "task-service",
@@ -62,6 +62,18 @@ export async function listTask(projectId: string) {
   const res = await pool.query(
     `SELECT * FROM tasks WHERE projectId=$1 ORDER BY createdAt DESC`,
     [projectId],
+  );
+  return res.rows;
+}
+
+export async function listUserTasks(userId: string) {
+  const res = await pool.query(
+    `SELECT t.*, p.name as projectName 
+     FROM tasks t
+     JOIN projects p ON t.projectId = p.projectId
+     WHERE t.ownerId=$1 
+     ORDER BY t.createdAt DESC`,
+    [userId],
   );
   return res.rows;
 }

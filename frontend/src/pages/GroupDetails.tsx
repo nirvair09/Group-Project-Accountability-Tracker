@@ -20,13 +20,14 @@ export default function GroupDetail() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDeadline, setNewTaskDeadline] = useState("");
+  const [newTaskAssignee, setNewTaskAssignee] = useState("");
   
   // Member search
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  // Load tasks
+  // Load tasks and members
   useEffect(() => {
     if (!token || !groupId) return;
     loadTasks();
@@ -52,9 +53,12 @@ export default function GroupDetail() {
     if (!token || !groupId || !newTaskTitle.trim()) return;
     
     try {
-      await createTask(groupId, newTaskTitle, newTaskDeadline, token);
+      // If no assignee is selected, it will default to creator on backend, 
+      // but we can also pass the selected one here.
+      await createTask(groupId, newTaskTitle, newTaskDeadline, token, newTaskAssignee || undefined);
       setNewTaskTitle("");
       setNewTaskDeadline("");
+      setNewTaskAssignee("");
       setShowTaskForm(false);
       loadTasks();
     } catch (error) {
@@ -103,7 +107,7 @@ export default function GroupDetail() {
       setSearchResults([]);
       setUserSearch("");
       setShowMemberForm(false);
-      loadMembers(); // Reload members list
+      loadMembers();
     } catch (error) {
       console.error("Failed to add member:", error);
       alert("Failed to add member");
@@ -151,25 +155,42 @@ export default function GroupDetail() {
             <div style={{ margin: "20px 0", padding: "15px", border: "1px solid #ccc", borderRadius: "5px" }}>
               <h3>Create New Task</h3>
               <div style={{ marginBottom: "10px" }}>
+                <label style={{ display: "block", marginBottom: "5px" }}>Task Title:</label>
                 <input
                   type="text"
                   placeholder="Task title"
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
-                  style={{ padding: "8px", width: "300px", marginRight: "10px" }}
+                  style={{ padding: "8px", width: "100%", maxWidth: "400px" }}
                 />
               </div>
               <div style={{ marginBottom: "10px" }}>
+                <label style={{ display: "block", marginBottom: "5px" }}>Deadline:</label>
                 <input
                   type="datetime-local"
                   value={newTaskDeadline}
                   onChange={(e) => setNewTaskDeadline(e.target.value)}
-                  style={{ padding: "8px", marginRight: "10px" }}
+                  style={{ padding: "8px", width: "100%", maxWidth: "400px" }}
                 />
+              </div>
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px" }}>Assign to:</label>
+                <select 
+                    value={newTaskAssignee} 
+                    onChange={(e) => setNewTaskAssignee(e.target.value)}
+                    style={{ padding: "8px", width: "100%", maxWidth: "400px" }}
+                >
+                    <option value="">Myself</option>
+                    {members.map(m => (
+                        <option key={m.userid} value={m.userid}>
+                            {m.name} {m.userid === user?.id ? "(Me)" : ""}
+                        </option>
+                    ))}
+                </select>
               </div>
               <button 
                 onClick={handleCreateTask}
-                style={{ padding: "8px 20px", cursor: "pointer" }}
+                style={{ padding: "10px 20px", cursor: "pointer" }}
               >
                 Create Task
               </button>
@@ -184,11 +205,13 @@ export default function GroupDetail() {
               new Date(task.deadline) < new Date() &&
               task.status !== "APPROVED";
 
+            const assignee = members.find(m => m.userid === task.ownerid);
+
             return (
               <div key={task.taskid} style={{ border: "1px solid #ccc", padding: "15px", margin: "10px 0", borderRadius: "5px" }}>
                 <strong>{task.title}</strong>
                 <div>Status: {task.status}</div>
-                <div>Owner: {task.ownerid}</div>
+                <div>Assigned to: {assignee?.name || task.ownerid}</div>
                 
                 {task.deadline && (
                   <div>

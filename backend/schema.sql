@@ -37,3 +37,15 @@ CREATE TABLE IF NOT EXISTS tasks (
     createdAt TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (projectId) REFERENCES projects(projectId) ON DELETE CASCADE
 );
+
+-- Evidence Events table
+CREATE TABLE IF NOT EXISTS evidence_events (
+    event_id VARCHAR(36) PRIMARY KEY,
+    project_id VARCHAR(36) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    source VARCHAR(50) NOT NULL,
+    timestamp TIMESTAMP DEFAULT NOW(),
+    metadata JSONB,
+    FOREIGN KEY (project_id) REFERENCES projects(projectId) ON DELETE CASCADE
+);

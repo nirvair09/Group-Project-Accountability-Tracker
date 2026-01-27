@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createTaskSchema = z.object({
   projectId: z.string().uuid(),
   title: z.string().min(3),
-  ownerId: z.string().uuid(),
+  ownerId: z.string().uuid().optional(),
   deadline: z.string().optional(),
 });
 

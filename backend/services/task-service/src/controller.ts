@@ -1,40 +1,77 @@
 import { Request, Response } from "express";
 import * as taskService from "./service";
 import { createTaskSchema, updateStatusScehma } from "./schema";
+import { AuthRequest } from "./middleware/auth";
 
-export async function createTaskController(req: Request, res: Response) {
-  const parsed = createTaskSchema.safeParse(req.body);
+export async function createTaskController(req: AuthRequest, res: Response) {
+  const body = { ...req.body };
+  
+  // Default ownerId to the authenticated user if not provided (assignment)
+  if (!body.ownerId && req.userId) {
+    body.ownerId = req.userId;
+  }
+
+  const parsed = createTaskSchema.safeParse(body);
 
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error });
   }
 
-  const task = await taskService.createTask(parsed.data);
-  return res.status(201).json({ message: "Task created successfully" });
+  try {
+    console.log("Creating task with body:", body);
+    console.log("Authenticated user:", req.userId);
+    
+    await taskService.createTask(parsed.data as any);
+    return res.status(201).json({ message: "Task created successfully" });
+  } catch (error: any) {
+    console.error("Task creation failed:", error);
+    return res.status(500).json({ error: error.message });
+  }
 }
 
-export async function updateTaskStatusController(req: Request, res: Response) {
+export async function updateTaskStatusController(req: AuthRequest, res: Response) {
   const parsed = updateStatusScehma.safeParse(req.body);
 
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error });
   }
 
-  const userId = req.headers["x-user-id"] as string;
+  const userId = req.userId;
   if (!userId) {
-    return res.status(400).json({ error: "Missing x-user-id header" });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
-  await taskService.updateTaskStatus(
-    req.params.id as string,
-    userId,
-    parsed.data.status,
-  );
-
-  res.json({ message: "Task status updated successfully" });
+  try {
+    await taskService.updateTaskStatus(
+        req.params.id as string,
+        userId,
+        parsed.data.status,
+      );
+    
+      res.json({ message: "Task status updated successfully" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
 export async function getTask(req: Request, res: Response) {
-  const tasks = await taskService.listTask(req.params.projectId as string);
-  res.json(tasks);
+  try {
+    const tasks = await taskService.listTask(req.params.projectId as string);
+    res.json(tasks);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function getMyTasks(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const tasks = await taskService.listUserTasks(userId);
+      res.json(tasks);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
 }
