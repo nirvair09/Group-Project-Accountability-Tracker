@@ -1,6 +1,6 @@
 import { useAuth } from "../auth/AuthContext";
 import { useState, useEffect } from "react";
-import { getProjects } from "../api/projectsApi";
+import { getProjects, getProjectMembers } from "../api/projectsApi";
 import { getTasksByProject } from "../api/tasksApi";
 
 export default function Scores() {
@@ -14,21 +14,21 @@ export default function Scores() {
     
     getProjects(token).then(async (projects) => {
         const scores = await Promise.all(projects.map(async (p: any) => {
-            const tasks = await getTasksByProject(p.projectid, token);
-            // Calculate scores for ALL members in this project (per project wise)
-            const membersMap: Record<string, any> = {};
-            
-            // First, get all members for this project to ensure everyone is listed even with 0 tasks
-            // For now, we'll derive members from tasks and current user
-            const membersInProject = Array.from(new Set(tasks.map((t: any) => t.ownerid)));
-            if (!membersInProject.includes(user?.id)) membersInProject.push(user?.id);
+            // Get both tasks and actual members for the project
+            const [tasks, members] = await Promise.all([
+                getTasksByProject(p.projectid, token),
+                getProjectMembers(p.projectid, token)
+            ]);
 
-            const projectMembersScores = membersInProject.map(memberId => {
-                const memberTasks = tasks.filter((t: any) => t.ownerid === memberId);
+            const projectMembersScores = members.map((member: any) => {
+                const memberId = member.userid || member.userId;
+                const memberTasks = tasks.filter((t: any) => (t.ownerid || t.ownerId) === memberId);
                 const approved = memberTasks.filter((t: any) => t.status === 'APPROVED');
                 const score = memberTasks.length > 0 ? Math.round((approved.length / memberTasks.length) * 100) : 0;
+                
                 return {
                     memberId,
+                    memberName: member.name,
                     total: memberTasks.length,
                     approved: approved.length,
                     score
@@ -63,18 +63,36 @@ export default function Scores() {
               {projectScores.map(project => (
                   <div key={project.id} style={{ padding: "25px", border: "1px solid #dee2e6", borderRadius: "12px", backgroundColor: "white", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
                       <h2 style={{ margin: "0 0 20px 0", color: "#007bff", borderBottom: "2px solid #f8f9fa", paddingBottom: "10px" }}>{project.name}</h2>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "20px" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "20px" }}>
                           {project.members.map((m: any) => (
                               <div key={m.memberId} style={{ padding: "15px", border: "1px solid #f0f0f0", borderRadius: "8px", backgroundColor: "#fdfdfd" }}>
-                                  <div style={{ fontWeight: "bold", marginBottom: "10px", display: "flex", justifyContent: "space-between" }}>
-                                      <span>{m.memberId === user?.id ? "Me" : `User (${m.memberId.slice(0,4)})`}</span>
-                                      <span style={{ color: m.score >= 70 ? "#28a745" : m.score >= 40 ? "#ffc107" : "#dc3545" }}>{m.score}%</span>
+                                  <div style={{ fontWeight: "bold", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                      <span style={{ fontSize: "1.1em" }}>
+                                          {m.memberId === user?.id ? (
+                                              <span>{m.memberName} <small style={{color: '#666', fontWeight: 'normal'}}>(Me)</small></span>
+                                          ) : m.memberName}
+                                      </span>
+                                      <span style={{ 
+                                          padding: '2px 8px', 
+                                          borderRadius: '12px', 
+                                          fontSize: '0.85em',
+                                          backgroundColor: m.score >= 70 ? "#d4edda" : m.score >= 40 ? "#fff3cd" : "#f8d7da",
+                                          color: m.score >= 70 ? "#155724" : m.score >= 40 ? "#856404" : "#721c24"
+                                      }}>
+                                          {m.score}%
+                                      </span>
                                   </div>
-                                  <div style={{ height: "6px", backgroundColor: "#eee", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
-                                      <div style={{ width: `${m.score}%`, height: "100%", backgroundColor: m.score >= 70 ? "#28a745" : m.score >= 40 ? "#ffc107" : "#dc3545" }}></div>
+                                  <div style={{ height: "8px", backgroundColor: "#eee", borderRadius: "4px", overflow: "hidden", marginBottom: "10px" }}>
+                                      <div style={{ 
+                                          width: `${m.score}%`, 
+                                          height: "100%", 
+                                          backgroundColor: m.score >= 70 ? "#28a745" : m.score >= 40 ? "#ffc107" : "#dc3545",
+                                          transition: 'width 0.3s ease'
+                                      }}></div>
                                   </div>
-                                  <div style={{ fontSize: "0.8em", color: "#888" }}>
-                                      {m.approved} of {m.total} tasks approved
+                                  <div style={{ fontSize: "0.85em", color: "#666", display: 'flex', justifyContent: 'space-between' }}>
+                                      <span>{m.total} Total Tasks</span>
+                                      <span>{m.approved} Approved</span>
                                   </div>
                               </div>
                           ))}

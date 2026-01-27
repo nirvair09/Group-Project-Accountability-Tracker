@@ -33,19 +33,30 @@ export default function GroupDetail() {
   useEffect(() => {
     if (!token || !groupId) return;
     setLoading(true);
-    Promise.all([
-        getProjectById(groupId, token),
-        getTasksByProject(groupId, token),
-        getProjectMembers(groupId, token),
-        getProjectActivity(groupId, token)
-    ]).then(([proj, tsk, mem, act]) => {
-        setProject(proj);
-        setTasks(tsk);
-        setMembers(mem);
-        setActivity(act);
-    })
-    .catch(console.error)
-    .finally(() => setLoading(false));
+
+    const loadData = async () => {
+        try {
+            // Load essential project data first
+            const proj = await getProjectById(groupId, token);
+            setProject(proj);
+            
+            // Load other data in parallel, but handle individual errors
+            const tasksPromise = getTasksByProject(groupId, token).then(setTasks).catch(e => console.error("Tasks load failed:", e));
+            const membersPromise = getProjectMembers(groupId, token).then(setMembers).catch(e => console.error("Members load failed:", e));
+            const activityPromise = getProjectActivity(groupId, token).then(setActivity).catch(e => {
+                console.error("Activity load failed (Check if evidence_events table exists):", e);
+                setActivity([]); // Default to empty if it fails
+            });
+
+            await Promise.all([tasksPromise, membersPromise, activityPromise]);
+        } catch (error) {
+            console.error("Primary project data load failed:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    loadData();
   }, [groupId, token]);
 
   const loadTasks = () => {
@@ -128,8 +139,9 @@ export default function GroupDetail() {
 
   if (loading) return <p style={{ padding: "20px" }}>Loading Group Data...</p>;
 
-  // Check if current user is project owner
-  const isProjectOwner = project?.ownerid === user?.id;
+  // Check if current user is project owner (handles both ownerid and ownerId casing)
+  const projectOwnerId = project?.ownerid || project?.ownerId;
+  const isProjectOwner = projectOwnerId === user?.id;
 
   return (
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
@@ -225,10 +237,11 @@ export default function GroupDetail() {
               new Date(task.deadline) < new Date() &&
               task.status !== "APPROVED";
 
-            const assignee = members.find(m => m.userid === task.ownerid);
+            const taskOwnerId = task.ownerid || task.ownerId;
+            const assignee = members.find(m => (m.userid || m.userId) === taskOwnerId);
 
             return (
-              <div key={task.taskid} style={{ border: "1px solid #ccc", padding: "15px", margin: "10px 0", borderRadius: "5px", backgroundColor: "white" }}>
+              <div key={task.taskid || task.taskId} style={{ border: "1px solid #ccc", padding: "15px", margin: "10px 0", borderRadius: "5px", backgroundColor: "white" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <strong>{task.title}</strong>
                     <span style={{ 
@@ -252,18 +265,18 @@ export default function GroupDetail() {
 
                 {/* Action buttons */}
                 <div style={{ marginTop: "10px" }}>
-                  {task.ownerid === user?.id && task.status === "CREATED" && (
+                  {taskOwnerId === user?.id && task.status === "CREATED" && (
                     <button 
-                      onClick={() => handleStatusChange(task.taskid, "IN_PROGRESS")}
+                      onClick={() => handleStatusChange(task.taskid || task.taskId, "IN_PROGRESS")}
                       style={{ marginRight: "5px", padding: "5px 10px", cursor: "pointer" }}
                     >
                       Start Task
                     </button>
                   )}
                   
-                  {task.ownerid === user?.id && task.status === "IN_PROGRESS" && (
+                  {taskOwnerId === user?.id && task.status === "IN_PROGRESS" && (
                     <button 
-                      onClick={() => handleStatusChange(task.taskid, "DONE")}
+                      onClick={() => handleStatusChange(task.taskid || task.taskId, "DONE")}
                       style={{ marginRight: "5px", padding: "5px 10px", cursor: "pointer" }}
                     >
                       Mark as Done
@@ -272,7 +285,7 @@ export default function GroupDetail() {
 
                   {isProjectOwner && task.status === "DONE" && (
                     <button 
-                      onClick={() => handleApprove(task.taskid)}
+                      onClick={() => handleApprove(task.taskid || task.taskId)}
                       style={{ padding: "5px 15px", cursor: "pointer", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "5px" }}
                     >
                       Approve Task
@@ -343,7 +356,7 @@ export default function GroupDetail() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
                 {members.map((member) => (
                 <div 
-                    key={member.userid} 
+                    key={member.userid || member.userId} 
                     style={{ 
                     padding: "15px", 
                     border: "1px solid #ddd", 
@@ -351,7 +364,7 @@ export default function GroupDetail() {
                     backgroundColor: "white"
                     }}
                 >
-                    <div><strong>{member.name}</strong> {member.userid === user?.id ? "(You)" : ""}</div>
+                    <div><strong>{member.name}</strong> {(member.userid || member.userId) === user?.id ? "(You)" : ""}</div>
                     <div style={{ fontSize: "0.85em", color: "#666" }}>{member.email}</div>
                     <div style={{ marginTop: "5px" }}>
                         <span style={{ 
