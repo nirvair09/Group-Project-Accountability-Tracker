@@ -1,8 +1,6 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import taskRoutes from "./routes";
-
-dotenv.config();
 
 const app = express();
 
@@ -14,6 +12,14 @@ app.use(express.json());
 
 app.use(taskRoutes);
 
-app.listen(process.env.TASK_PORT, () => {
+import { pool } from "../../../shared/db";
+
+app.listen(process.env.TASK_PORT, async () => {
   console.log("Task Service is running on port:", process.env.TASK_PORT);
+  try {
+    await pool.query("SELECT NOW()");
+    console.log("DB Connected");
+  } catch (e) {
+    console.error("DB Connection Failed", e);
+  }
 });

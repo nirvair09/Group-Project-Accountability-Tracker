@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { EvidenceEvent } from "./types";
+import { pool } from "../db";
 import { v4 as uuid } from "uuid";
 
 export async function recordEvent(
