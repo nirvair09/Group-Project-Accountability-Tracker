@@ -1,17 +1,20 @@
-import { projects } from "../data/projects";
-import { projectMembers } from "../data/projectMembers";
-import type { Project, ProjectMember } from "../types";
+import { apiFetch } from "./http";
 
-export function getProjects(): Promise<Project[]> {
-  return Promise.resolve(projects);
+export function getMyProjects(token: string) {
+  return apiFetch(
+    "http://localhost:4002/projects",
+    {},
+    token
+  );
 }
 
-export function getProjectById(id: string): Promise<Project | undefined> {
-  return Promise.resolve(projects.find((p) => p.id === id));
-}
-
-export function getProjectMembers(projectId: string): Promise<ProjectMember[]> {
-  return Promise.resolve(
-    projectMembers.filter((m) => m.projectId === projectId),
+export function createProject(name: string, token: string) {
+  return apiFetch(
+    "http://localhost:4002/projects",
+    {
+      method: "POST",
+      body: JSON.stringify({ name })
+    },
+    token
   );
 }

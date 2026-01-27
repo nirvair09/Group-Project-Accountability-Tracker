@@ -1,10 +1,9 @@
-import { users } from "../data/users";
-import type { User } from "../types";
+import { apiFetch } from "./http";
 
-export function getUsers(): Promise<User[]> {
-  return Promise.resolve(users);
-}
-
-export function getUserById(id: string): Promise<User | undefined> {
-  return Promise.resolve(users.find((u) => u.id === id));
+export function searchUsers(query: string, token: string) {
+  return apiFetch(
+    `http://localhost:4001/users/search?q=${query}`,
+    {},
+    token
+  );
 }
