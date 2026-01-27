@@ -22,7 +22,7 @@ export const registerUser=async(
 }
 
 
-export const loginUser=async(email:string,password:String)=>{
+export const loginUser=async(email:string,password:string)=>{
     const result=await pool.query(
         `select * from users where email=$1`,
         [email]
