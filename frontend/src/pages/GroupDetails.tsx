@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { getTasksByProject, updateTaskStatus, approveTask, createTask } from "../api/tasksApi";
 import { searchUsers } from "../api/usersApi";
-import { addProjectMember } from "../api/projectsApi";
+import { addProjectMember, getProjectMembers } from "../api/projectsApi";
 
 type Tab = "TASKS" | "MEMBERS" | "ACTIVITY";
 const TABS: Tab[] = ["TASKS", "MEMBERS", "ACTIVITY"];
@@ -13,13 +13,13 @@ export default function GroupDetail() {
   const { token, user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("TASKS");
   const [tasks, setTasks] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Task creation form
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDeadline, setNewTaskDeadline] = useState("");
-  const [newTaskAssignee, setNewTaskAssignee] = useState("");
   
   // Member search
   const [showMemberForm, setShowMemberForm] = useState(false);
@@ -30,6 +30,7 @@ export default function GroupDetail() {
   useEffect(() => {
     if (!token || !groupId) return;
     loadTasks();
+    loadMembers();
   }, [groupId, token]);
 
   const loadTasks = () => {
@@ -38,6 +39,13 @@ export default function GroupDetail() {
       .then(setTasks)
       .catch(console.error)
       .finally(() => setLoading(false));
+  };
+
+  const loadMembers = () => {
+    if (!token || !groupId) return;
+    getProjectMembers(groupId, token)
+      .then(setMembers)
+      .catch(console.error);
   };
 
   const handleCreateTask = async () => {
@@ -95,6 +103,7 @@ export default function GroupDetail() {
       setSearchResults([]);
       setUserSearch("");
       setShowMemberForm(false);
+      loadMembers(); // Reload members list
     } catch (error) {
       console.error("Failed to add member:", error);
       alert("Failed to add member");
@@ -274,7 +283,26 @@ export default function GroupDetail() {
             </div>
           )}
           
-          <p>Member management implemented. Members can be added using the search above.</p>
+          <div style={{ marginTop: "20px" }}>
+            <h3>Current Members</h3>
+            {members.length === 0 && <p>No members yet</p>}
+            {members.map((member) => (
+              <div 
+                key={member.userid} 
+                style={{ 
+                  padding: "15px", 
+                  border: "1px solid #ddd", 
+                  marginBottom: "10px",
+                  borderRadius: "5px"
+                }}
+              >
+                <div><strong>{member.name}</strong></div>
+                <div>Email: {member.email}</div>
+                <div>Role: {member.role}</div>
+                <div>Joined: {new Date(member.joinedat).toLocaleDateString()}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

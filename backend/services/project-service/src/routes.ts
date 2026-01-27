@@ -47,4 +47,15 @@ router.post("/projects/:projectId/members", authenticate, async (req: AuthReques
   }
 });
 
+// Get project members
+router.get("/projects/:projectId/members", authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { projectId } = req.params;
+    const members = await projectService.getProjectMembers(projectId);
+    res.json(members);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

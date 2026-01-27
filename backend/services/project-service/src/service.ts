@@ -58,3 +58,16 @@ export async function addProjectMember(
     [projectId, userId, role]
   );
 }
+
+export async function getProjectMembers(projectId: string) {
+  const result = await pool.query(
+    `SELECT pm.userId, pm.role, pm.joinedAt, u.name, u.email
+     FROM project_members pm
+     INNER JOIN users u ON pm.userId = u.id
+     WHERE pm.projectId = $1
+     ORDER BY pm.joinedAt ASC`,
+    [projectId]
+  );
+
+  return result.rows;
+}
