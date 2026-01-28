@@ -54,7 +54,7 @@ export default function Login() {
             <label style={{ display: "block", marginBottom: "8px", color: "#555", fontWeight: "600", fontSize: "0.9rem" }}>Email Address</label>
             <input 
               type="email"
-              placeholder="name@example.com" 
+              placeholder="Enter email" 
               required
               onChange={e => setEmail(e.target.value)}
               style={{
@@ -74,7 +74,7 @@ export default function Login() {
             <label style={{ display: "block", marginBottom: "8px", color: "#555", fontWeight: "600", fontSize: "0.9rem" }}>Password</label>
             <input 
               type="password" 
-              placeholder="••••••••" 
+              placeholder="Enter password" 
               required
               onChange={e => setPassword(e.target.value)}
               style={{

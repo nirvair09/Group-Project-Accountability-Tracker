@@ -1,11 +1,27 @@
 import { useAuth } from "../auth/AuthContext";
 import { useState, useEffect } from "react";
 import { getMyTasks, updateTaskStatus } from "../api/tasksApi";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function MyTasks() {
   const { token, user } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal states
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: "primary" | "danger" | "success";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    type: "primary",
+  });
 
   useEffect(() => {
     if (!token) return;
@@ -24,6 +40,19 @@ export default function MyTasks() {
     } catch (error) {
       console.error("Failed to update status:", error);
     }
+  };
+
+  const askConfirm = (title: string, message: string, onConfirm: () => void, type: "primary" | "danger" | "success" = "primary") => {
+    setConfirmConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: async () => {
+        await onConfirm();
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      },
+      type,
+    });
   };
 
   if (loading) return <p style={{ padding: "20px" }}>Loading your tasks...</p>;
@@ -79,7 +108,12 @@ export default function MyTasks() {
                 <div>
                     {task.status === "CREATED" && (
                         <button 
-                            onClick={() => handleStatusChange(task.taskid, "IN_PROGRESS")}
+                            onClick={() => askConfirm(
+                                "Start Task", 
+                                "Are you sure you want to start this task?", 
+                                () => handleStatusChange(task.taskid, "IN_PROGRESS"),
+                                "primary"
+                            )}
                             style={{ padding: "8px 20px", cursor: "pointer", borderRadius: "5px", backgroundColor: "#007bff", color: "white", border: "none" }}
                         >
                             Start Task
@@ -87,7 +121,12 @@ export default function MyTasks() {
                     )}
                     {task.status === "IN_PROGRESS" && (
                         <button 
-                            onClick={() => handleStatusChange(task.taskid, "DONE")}
+                            onClick={() => askConfirm(
+                                "Mark Task Done", 
+                                "Are you sure you have completed this task?", 
+                                () => handleStatusChange(task.taskid, "DONE"),
+                                "success"
+                            )}
                             style={{ padding: "8px 20px", cursor: "pointer", borderRadius: "5px", backgroundColor: "#28a745", color: "white", border: "none" }}
                         >
                             Complete Task
@@ -102,6 +141,15 @@ export default function MyTasks() {
           })}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        type={confirmConfig.type}
+      />
     </div>
   );
 }

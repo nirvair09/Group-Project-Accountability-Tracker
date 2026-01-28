@@ -55,7 +55,7 @@ export default function Register() {
             <label style={{ display: "block", marginBottom: "8px", color: "#555", fontWeight: "600", fontSize: "0.9rem" }}>Full Name</label>
             <input 
               type="text"
-              placeholder="John Doe" 
+              placeholder="Enter Name" 
               required
               value={name}
               onChange={e => setName(e.target.value)}
@@ -75,7 +75,7 @@ export default function Register() {
             <label style={{ display: "block", marginBottom: "8px", color: "#555", fontWeight: "600", fontSize: "0.9rem" }}>Email Address</label>
             <input 
               type="email"
-              placeholder="name@example.com" 
+              placeholder="Enter email" 
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -95,7 +95,7 @@ export default function Register() {
             <label style={{ display: "block", marginBottom: "8px", color: "#555", fontWeight: "600", fontSize: "0.9rem" }}>Password</label>
             <input 
               type="password" 
-              placeholder="••••••••" 
+              placeholder="Enter password" 
               required
               value={password}
               onChange={e => setPassword(e.target.value)}

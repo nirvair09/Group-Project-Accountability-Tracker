@@ -4,6 +4,7 @@ import { useAuth } from "../auth/AuthContext";
 import { getTasksByProject, updateTaskStatus, approveTask, createTask, getProjectActivity } from "../api/tasksApi";
 import { searchUsers } from "../api/usersApi";
 import { addProjectMember, getProjectMembers, getProjectById } from "../api/projectsApi";
+import ConfirmModal from "../components/ConfirmModal";
 
 type Tab = "TASKS" | "MEMBERS" | "ACTIVITY" | "SCORES";
 const TABS: Tab[] = ["TASKS", "MEMBERS", "ACTIVITY", "SCORES"];
@@ -17,6 +18,21 @@ export default function GroupDetail() {
   const [members, setMembers] = useState<any[]>([]);
   const [activity, setActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal states
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: "primary" | "danger" | "success";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    type: "primary",
+  });
   
   // Task creation form
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -74,6 +90,19 @@ export default function GroupDetail() {
     getProjectActivity(groupId, token).then(setActivity).catch(console.error);
   };
 
+  const askConfirm = (title: string, message: string, onConfirm: () => void, type: "primary" | "danger" | "success" = "primary") => {
+    setConfirmConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: async () => {
+        await onConfirm();
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      },
+      type,
+    });
+  };
+
   const handleCreateTask = async () => {
     if (!token || !groupId || !newTaskTitle.trim()) return;
     try {
@@ -86,7 +115,7 @@ export default function GroupDetail() {
       loadActivity();
     } catch (error) {
       console.error("Failed to create task:", error);
-      alert("Failed to create task");
+      alert("Failed to create task: " + (error instanceof Error ? error.message : String(error)));
     }
   };
 
@@ -267,7 +296,12 @@ export default function GroupDetail() {
                 <div style={{ marginTop: "10px" }}>
                   {taskOwnerId === user?.id && task.status === "CREATED" && (
                     <button 
-                      onClick={() => handleStatusChange(task.taskid || task.taskId, "IN_PROGRESS")}
+                      onClick={() => askConfirm(
+                        "Start Task", 
+                        "Are you sure you want to start this task?", 
+                        () => handleStatusChange(task.taskid || task.taskId, "IN_PROGRESS"),
+                        "primary"
+                      )}
                       style={{ marginRight: "5px", padding: "5px 10px", cursor: "pointer" }}
                     >
                       Start Task
@@ -276,7 +310,12 @@ export default function GroupDetail() {
                   
                   {taskOwnerId === user?.id && task.status === "IN_PROGRESS" && (
                     <button 
-                      onClick={() => handleStatusChange(task.taskid || task.taskId, "DONE")}
+                      onClick={() => askConfirm(
+                        "Mark Task Done", 
+                        "Are you sure you have completed this task?", 
+                        () => handleStatusChange(task.taskid || task.taskId, "DONE"),
+                        "success"
+                      )}
                       style={{ marginRight: "5px", padding: "5px 10px", cursor: "pointer" }}
                     >
                       Mark as Done
@@ -285,7 +324,12 @@ export default function GroupDetail() {
 
                   {isProjectOwner && task.status === "DONE" && (
                     <button 
-                      onClick={() => handleApprove(task.taskid || task.taskId)}
+                      onClick={() => askConfirm(
+                        "Approve Task", 
+                        "Are you sure you want to approve this task completion?", 
+                        () => handleApprove(task.taskid || task.taskId),
+                        "success"
+                      )}
                       style={{ padding: "5px 15px", cursor: "pointer", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "5px" }}
                     >
                       Approve Task
@@ -473,6 +517,14 @@ export default function GroupDetail() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        type={confirmConfig.type}
+      />
     </div>
   );
 }

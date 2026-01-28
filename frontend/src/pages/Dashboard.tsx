@@ -3,12 +3,28 @@ import { useState, useEffect } from "react";
 import { getProjects } from "../api/projectsApi";
 import { getMyTasks, updateTaskStatus, approveTask } from "../api/tasksApi";
 import { Link } from "react-router-dom";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function Dashboard() {
   const { token, user } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal states
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: "primary" | "danger" | "success";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    type: "primary",
+  });
 
   useEffect(() => {
     if (!token) return;
@@ -45,6 +61,19 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Failed to approve:", error);
     }
+  };
+
+  const askConfirm = (title: string, message: string, onConfirm: () => void, type: "primary" | "danger" | "success" = "primary") => {
+    setConfirmConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: async () => {
+        await onConfirm();
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      },
+      type,
+    });
   };
 
   if (loading) return <p style={{ padding: "20px" }}>Loading Dashboard...</p>;
@@ -96,7 +125,12 @@ export default function Dashboard() {
                             <div style={{ marginTop: "12px", display: "flex", gap: "5px" }}>
                                 {task.status === "CREATED" && (
                                     <button 
-                                        onClick={() => handleStatusChange(task.taskid, "IN_PROGRESS")}
+                                        onClick={() => askConfirm(
+                                            "Start Task", 
+                                            "Are you sure you want to start this task?", 
+                                            () => handleStatusChange(task.taskid, "IN_PROGRESS"),
+                                            "primary"
+                                        )}
                                         style={{ padding: "4px 12px", cursor: "pointer", borderRadius: "4px", backgroundColor: "#007bff", color: "white", border: "none" }}
                                     >
                                         Start
@@ -104,7 +138,12 @@ export default function Dashboard() {
                                 )}
                                 {task.status === "IN_PROGRESS" && (
                                     <button 
-                                        onClick={() => handleStatusChange(task.taskid, "DONE")}
+                                        onClick={() => askConfirm(
+                                            "Mark Task Done", 
+                                            "Are you sure you have completed this task?", 
+                                            () => handleStatusChange(task.taskid, "DONE"),
+                                            "success"
+                                        )}
                                         style={{ padding: "4px 12px", cursor: "pointer", borderRadius: "4px", backgroundColor: "#28a745", color: "white", border: "none" }}
                                     >
                                         Mark Done
@@ -112,7 +151,12 @@ export default function Dashboard() {
                                 )}
                                 {task.projectownerid === user?.id && task.status === "DONE" && (
                                     <button 
-                                        onClick={() => handleApprove(task.taskid)}
+                                        onClick={() => askConfirm(
+                                            "Approve Task", 
+                                            "Are you sure you want to approve this task completion?", 
+                                            () => handleApprove(task.taskid),
+                                            "success"
+                                        )}
                                         style={{ padding: "4px 12px", cursor: "pointer", borderRadius: "4px", backgroundColor: "#6c757d", color: "white", border: "none" }}
                                     >
                                         Approve Task
@@ -150,6 +194,15 @@ export default function Dashboard() {
             )}
         </section>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        type={confirmConfig.type}
+      />
     </div>
   );
 }

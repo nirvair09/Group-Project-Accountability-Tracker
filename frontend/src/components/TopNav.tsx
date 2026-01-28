@@ -1,14 +1,17 @@
+import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
+import ConfirmModal from "./ConfirmModal";
 
 export default function TopNav() {
   const { user, logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
     <header
       style={{
-        position:"sticky",
-        top:0,
-        zIndex:1000,
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
         height: "56px",
         borderBottom: "1px solid #e5e7eb",
         display: "flex",
@@ -63,7 +66,7 @@ export default function TopNav() {
         </div>
 
         <button
-          onClick={logout}
+          onClick={() => setShowLogoutModal(true)}
           style={{
             padding: "6px 12px",
             backgroundColor: "#fee2e2",
@@ -81,6 +84,16 @@ export default function TopNav() {
           Logout
         </button>
       </div>
+
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        title="Logout Confirmation"
+        message="Are you sure you want to log out?"
+        confirmText="Yes, Logout"
+        type="danger"
+        onConfirm={logout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </header>
   );
 }

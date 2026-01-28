@@ -18,14 +18,11 @@ export async function createTaskController(req: AuthRequest, res: Response) {
   }
 
   try {
-    console.log("Creating task with body:", body);
-    console.log("Authenticated user:", req.userId);
-    
     await taskService.createTask(parsed.data as any);
     return res.status(201).json({ message: "Task created successfully" });
   } catch (error: any) {
     console.error("Task creation failed:", error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message || "Internal Server Error" });
   }
 }
 
