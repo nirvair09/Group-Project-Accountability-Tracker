@@ -24,7 +24,7 @@ export default function Activity() {
       
       {activities.length === 0 ? (
         <div style={{ padding: "40px", textAlign: "center", border: "1px dashed #ccc", borderRadius: "10px", color: "#666" }}>
-            No activity found across your projects.
+            <p>This feature will be available soon where activities of all group members will be visible.</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>

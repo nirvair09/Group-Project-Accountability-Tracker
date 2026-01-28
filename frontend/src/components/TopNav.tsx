@@ -6,6 +6,9 @@ export default function TopNav() {
   return (
     <header
       style={{
+        position:"sticky",
+        top:0,
+        zIndex:1000,
         height: "56px",
         borderBottom: "1px solid #e5e7eb",
         display: "flex",
@@ -20,7 +23,7 @@ export default function TopNav() {
 
       {/* Center */}
       <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-        <select
+        <h1
           style={{
             padding: "6px 12px",
             border: "1px solid #d1d5db",
@@ -30,16 +33,16 @@ export default function TopNav() {
             backgroundColor: "#f9fafb"
           }}
         >
-          <option>Group Project Accountability Tracker</option>
-        </select>
+          Group Project Accountability Tracker
+        </h1>
       </div>
 
       {/* Right */}
       <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-        <div style={{ textAlign: "right" }}>
+        {/* <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#374151" }}>{user?.name}</div>
           <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{user?.email}</div>
-        </div>
+        </div> */}
 
         <div
           style={{
