@@ -3,5 +3,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.pool = void 0;
 const pg_1 = require("pg");
 exports.pool = new pg_1.Pool({
-    connectionString: process.env.DataBase_URL,
+    connectionString: process.env.DATABASE_URL || process.env.DataBase_URL,
 });

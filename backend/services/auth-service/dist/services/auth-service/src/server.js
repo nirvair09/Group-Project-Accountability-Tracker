@@ -8,22 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const routes_1 = __importDefault(require("./routes"));
+const app_1 = require("./app");
+const env_1 = require("./config/env");
 const shared_1 = require("@gpa/shared");
-const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
-app.use(routes_1.default);
-const PORT = process.env.PORT || process.env.PROJECT_PORT || 4002;
-app.listen(PORT, () => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Project Service is running on port:", PORT);
+app_1.app.listen(env_1.env.PORT, () => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(`Auth service running on port ${env_1.env.PORT}`);
     try {
         yield shared_1.pool.query("SELECT NOW()");
         console.log("DB Connected");

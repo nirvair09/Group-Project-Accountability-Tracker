@@ -1,10 +1,14 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "services/*"
+  ],
   "scripts": {
     "dev": "concurrently -n \"AUTH,PROJECT,TASK\" -c \"blue,green,magenta\" \"npm run dev --prefix services/auth-service\" \"npm run dev --prefix services/project-service\" \"npm run dev --prefix services/task-service\"",
-    "install:all": "npm install && npm install --prefix services/auth-service && npm install --prefix services/project-service && npm install --prefix services/task-service"
+    "install:all": "npm install"
   },
   "keywords": [],
   "author": "",

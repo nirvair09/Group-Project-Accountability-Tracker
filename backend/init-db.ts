@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { pool } from "./shared/db";
+import { pool } from "./shared";
 import fs from "fs";
 import path from "path";
 

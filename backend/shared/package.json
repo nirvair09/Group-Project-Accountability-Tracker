@@ -1,0 +1,13 @@
+{
+  "name": "@gpa/shared",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "pg": "^8.17.2",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.5",
+    "@types/uuid": "^9.0.8"
+  }
+}

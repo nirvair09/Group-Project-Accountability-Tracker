@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import routes from "./routes";
-import { pool } from "../../../shared/db";
+import { pool } from "@gpa/shared";
 
 const app = express();
 

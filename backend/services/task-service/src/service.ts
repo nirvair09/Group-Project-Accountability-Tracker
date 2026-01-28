@@ -1,5 +1,4 @@
-import { pool } from "../../../shared/db";
-import { recordEvent } from "../../../shared/events/recordEvent";
+import { pool, recordEvent } from "@gpa/shared";
 import { v4 as uuid } from "uuid";
 
 export async function createTask(data: {

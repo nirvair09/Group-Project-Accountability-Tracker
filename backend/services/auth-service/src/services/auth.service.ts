@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";   
-import { pool } from "../config/db";
+import { pool } from "@gpa/shared";
 import { v4 as uuid } from "uuid";
 
 export const registerUser=async(

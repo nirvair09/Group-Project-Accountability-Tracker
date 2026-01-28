@@ -70,6 +70,16 @@ router.post("/projects", auth_1.authenticate, (req, res) => __awaiter(void 0, vo
         res.status(500).json({ error: error.message });
     }
 }));
+// Get project by ID
+router.get("/projects/:projectId", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const project = yield projectService.getProjectById(req.params.projectId);
+        res.json(project);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}));
 // Add member to project
 router.post("/projects/:projectId/members", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -80,6 +90,17 @@ router.post("/projects/:projectId/members", auth_1.authenticate, (req, res) => _
         }
         yield projectService.addProjectMember(projectId, String(userId), role);
         res.status(201).json({ message: "Member added successfully" });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}));
+// Get project members
+router.get("/projects/:projectId/members", auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { projectId } = req.params;
+        const members = yield projectService.getProjectMembers(projectId);
+        res.json(members);
     }
     catch (error) {
         res.status(500).json({ error: error.message });

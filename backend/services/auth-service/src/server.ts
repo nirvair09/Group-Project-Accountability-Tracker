@@ -1,7 +1,7 @@
 import { app } from "./app";
 import { env } from "./config/env";
 
-import { pool } from "./config/db";
+import { pool } from "@gpa/shared";
 
 app.listen(env.PORT, async () => {
   console.log(`Auth service running on port ${env.PORT}`);

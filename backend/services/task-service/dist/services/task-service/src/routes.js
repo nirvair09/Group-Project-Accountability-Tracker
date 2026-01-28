@@ -35,8 +35,13 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const controller = __importStar(require("./controller"));
+const auth_1 = require("./middleware/auth");
 const router = (0, express_1.Router)();
-router.post("/tasks", controller.createTaskController);
-router.patch("/tasks/:id/status", controller.updateTaskStatusController);
-router.get("/projects/:projectId/tasks", controller.getTask);
+router.post("/tasks", auth_1.authenticate, controller.createTaskController);
+router.patch("/tasks/:id/status", auth_1.authenticate, controller.updateTaskStatusController);
+router.get("/projects/:projectId/tasks", auth_1.authenticate, controller.getTask);
+router.get("/projects/:projectId/activity", auth_1.authenticate, controller.getProjectActivityController);
+router.get("/activity", auth_1.authenticate, controller.getAllActivityController);
+router.get("/tasks/mine", auth_1.authenticate, controller.getMyTasks);
+router.patch("/tasks/:id/approve", auth_1.authenticate, controller.approveTaskController);
 exports.default = router;

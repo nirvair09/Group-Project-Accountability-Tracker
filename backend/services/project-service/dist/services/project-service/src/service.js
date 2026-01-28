@@ -13,22 +13,23 @@ exports.createProject = createProject;
 exports.getUserProjects = getUserProjects;
 exports.getProjectById = getProjectById;
 exports.addProjectMember = addProjectMember;
-const db_1 = require("../../../shared/db");
+exports.getProjectMembers = getProjectMembers;
+const shared_1 = require("@gpa/shared");
 const uuid_1 = require("uuid");
 function createProject(name, ownerId) {
     return __awaiter(this, void 0, void 0, function* () {
         const projectId = (0, uuid_1.v4)();
-        yield db_1.pool.query(`INSERT INTO projects (projectId, name, ownerId, createdAt) 
+        yield shared_1.pool.query(`INSERT INTO projects (projectId, name, ownerId, createdAt) 
      VALUES ($1, $2, $3, NOW())`, [projectId, name, ownerId]);
         // Add owner as a member
-        yield db_1.pool.query(`INSERT INTO project_members (projectId, userId, role, joinedAt) 
+        yield shared_1.pool.query(`INSERT INTO project_members (projectId, userId, role, joinedAt) 
      VALUES ($1, $2, 'OWNER', NOW())`, [projectId, ownerId]);
         return { projectId, name, ownerId };
     });
 }
 function getUserProjects(userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        const result = yield db_1.pool.query(`SELECT p.projectId, p.name, p.ownerId, p.createdAt, pm.role
+        const result = yield shared_1.pool.query(`SELECT p.projectId, p.name, p.ownerId, p.createdAt, pm.role
      FROM projects p
      INNER JOIN project_members pm ON p.projectId = pm.projectId
      WHERE pm.userId = $1
@@ -38,7 +39,7 @@ function getUserProjects(userId) {
 }
 function getProjectById(projectId) {
     return __awaiter(this, void 0, void 0, function* () {
-        const result = yield db_1.pool.query(`SELECT * FROM projects WHERE projectId = $1`, [projectId]);
+        const result = yield shared_1.pool.query(`SELECT * FROM projects WHERE projectId = $1`, [projectId]);
         if (result.rows.length === 0) {
             throw new Error("Project not found");
         }
@@ -47,8 +48,18 @@ function getProjectById(projectId) {
 }
 function addProjectMember(projectId_1, userId_1) {
     return __awaiter(this, arguments, void 0, function* (projectId, userId, role = "MEMBER") {
-        yield db_1.pool.query(`INSERT INTO project_members (projectId, userId, role, joinedAt) 
+        yield shared_1.pool.query(`INSERT INTO project_members (projectId, userId, role, joinedAt) 
      VALUES ($1, $2, $3, NOW())
      ON CONFLICT (projectId, userId) DO NOTHING`, [projectId, userId, role]);
+    });
+}
+function getProjectMembers(projectId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const result = yield shared_1.pool.query(`SELECT pm.userId, pm.role, pm.joinedAt, u.name, u.email
+     FROM project_members pm
+     INNER JOIN users u ON pm.userId = u.id
+     WHERE pm.projectId = $1
+     ORDER BY pm.joinedAt ASC`, [projectId]);
+        return result.rows;
     });
 }

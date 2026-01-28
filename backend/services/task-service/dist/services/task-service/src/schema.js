@@ -5,7 +5,7 @@ const zod_1 = require("zod");
 exports.createTaskSchema = zod_1.z.object({
     projectId: zod_1.z.string().uuid(),
     title: zod_1.z.string().min(3),
-    ownerId: zod_1.z.string().uuid(),
+    ownerId: zod_1.z.string().uuid().optional(),
     deadline: zod_1.z.string().optional(),
 });
 exports.updateStatusScehma = zod_1.z.object({

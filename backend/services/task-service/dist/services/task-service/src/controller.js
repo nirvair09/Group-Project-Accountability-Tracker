@@ -45,16 +45,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createTaskController = createTaskController;
 exports.updateTaskStatusController = updateTaskStatusController;
 exports.getTask = getTask;
+exports.getMyTasks = getMyTasks;
+exports.approveTaskController = approveTaskController;
+exports.getProjectActivityController = getProjectActivityController;
+exports.getAllActivityController = getAllActivityController;
 const taskService = __importStar(require("./service"));
 const schema_1 = require("./schema");
 function createTaskController(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const parsed = schema_1.createTaskSchema.safeParse(req.body);
+        const body = Object.assign({}, req.body);
+        // Default ownerId to the authenticated user if not provided (assignment)
+        if (!body.ownerId && req.userId) {
+            body.ownerId = req.userId;
+        }
+        const parsed = schema_1.createTaskSchema.safeParse(body);
         if (!parsed.success) {
             return res.status(400).json({ error: parsed.error });
         }
-        const task = yield taskService.createTask(parsed.data);
-        return res.status(201).json({ message: "Task created successfully" });
+        try {
+            yield taskService.createTask(parsed.data);
+            return res.status(201).json({ message: "Task created successfully" });
+        }
+        catch (error) {
+            console.error("Task creation failed:", error);
+            return res.status(500).json({ error: error.message || "Internal Server Error" });
+        }
     });
 }
 function updateTaskStatusController(req, res) {
@@ -63,17 +78,83 @@ function updateTaskStatusController(req, res) {
         if (!parsed.success) {
             return res.status(400).json({ error: parsed.error });
         }
-        const userId = req.headers["x-user-id"];
+        const userId = req.userId;
         if (!userId) {
-            return res.status(400).json({ error: "Missing x-user-id header" });
+            return res.status(401).json({ error: "Unauthorized" });
         }
-        yield taskService.updateTaskStatus(req.params.id, userId, parsed.data.status);
-        res.json({ message: "Task status updated successfully" });
+        try {
+            yield taskService.updateTaskStatus(req.params.id, userId, parsed.data.status);
+            res.json({ message: "Task status updated successfully" });
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     });
 }
 function getTask(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const tasks = yield taskService.listTask(req.params.projectId);
-        res.json(tasks);
+        try {
+            const tasks = yield taskService.listTask(req.params.projectId);
+            res.json(tasks);
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+}
+function getMyTasks(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const userId = req.userId;
+            if (!userId) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            const tasks = yield taskService.listUserTasks(userId);
+            res.json(tasks);
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+}
+function approveTaskController(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const userId = req.userId;
+            if (!userId) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            yield taskService.approveTask(req.params.id, userId);
+            res.json({ message: "Task approved successfully" });
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+}
+function getProjectActivityController(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const activity = yield taskService.getProjectActivity(req.params.projectId);
+            res.json(activity);
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+}
+function getAllActivityController(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const userId = req.userId;
+            if (!userId) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            const activity = yield taskService.getAllUserActivity(userId);
+            res.json(activity);
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     });
 }

@@ -1,4 +1,4 @@
-import { pool } from "../../../shared/db";
+import { pool } from "@gpa/shared";
 import { v4 as uuid } from "uuid";
 
 export async function createProject(name: string, ownerId: string) {

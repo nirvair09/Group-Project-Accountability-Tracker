@@ -15,7 +15,7 @@ app.use(express.json());
 
 app.use(taskRoutes);
 
-import { pool } from "../../../shared/db";
+import { pool } from "@gpa/shared";
 
 const PORT = process.env.PORT || process.env.TASK_PORT || 4003;
 
