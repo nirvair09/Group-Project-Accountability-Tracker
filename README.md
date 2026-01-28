@@ -1,5 +1,6 @@
 # GPA Tracker - Group Project Accountability System
 
+[![Vercel](https://img.shields.io/badge/Deployment-Vercel-black.svg)](https://group-project-accountability-tracke.vercel.app/)
 [![Microservices](https://img.shields.io/badge/Architecture-Microservices-blue.svg)](systemDesign.md)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/Frontend-React-61dafb.svg)](https://reactjs.org/)
