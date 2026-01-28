@@ -1,285 +1,87 @@
-# Group Project Accountability Tracker – Simple System Design
+# Group Project Accountability Tracker – System Design
 
-## 1. The Problem
+## 1. The Core Problem
+In academic and professional group projects:
+- **Inequality**: Some members carry the load while others (freeloaders) do minimal work.
+- **Grading Bias**: Often, every member receives the same grade regardless of individual input.
+- **Lack of Record**: There is no objective, unalterable system to track "who did what and when."
 
-In group projects:
-
-- Some people work a lot
-- Some people barely work
-- Everyone gets the same grade
-
-The real issue is not laziness.  
-The issue is **no system to record who actually did what**.
-
-This app exists to:
-→ record work  
-→ show contribution clearly  
-→ make freeloading visible
-
-No spying. No guessing. Just recorded actions.
+**The GPA Tracker solves this by providing "Visible Truth."**
 
 ---
 
-## 2. What the System Does (In One Line)
-
-It **records actions as evidence**, then **calculates contribution** from that evidence.
-
-No opinions. No “trust me bro”.
-
----
-
-## 3. Main Parts of the System
-
-Think of the system as **7 simple boxes**.
+## 2. Solution Philosophy
+The system **records actions as evidence** and **calculates contribution** from that evidence.
+- **Objective**: No opinions, only logs.
+- **Immutable**: Evidence cannot be deleted or edited.
+- **Verifiable**: Leaders/Faculties must approve work before it counts towards a score.
 
 ---
 
-### 3.1 Login & Users
+## 3. Technical Architecture (Microservices)
+The backend is split into independent services to handle specific domains:
 
-Purpose:
+### 3.1 Auth Service (Port 4001)
+- Handles user identity (Registration/Login).
+- Issues JWT tokens for secure cross-service communication.
+- Manages user profiles and roles.
 
-- Who are you?
-- Are you a student or faculty?
-- Which group are you in?
+### 3.2 Project Service (Port 4002)
+- Handles project containers and group logic.
+- Managed memberships (Project Owners vs. Members).
+- Handles invites and group roles.
 
-That’s it.  
-No project logic here.
-
----
-
-### 3.2 Projects
-
-Purpose:
-
-- Create a project
-- Add members
-- Set deadlines and milestones
-
-A project is just a **container**.
+### 3.3 Task Service (Port 4003)
+- The core engine for work tracking.
+- Implements the task lifecycle: `CREATED` → `IN_PROGRESS` → `DONE` → `APPROVED`.
+- Triggers **Evidence Recording** on every state change.
 
 ---
 
-### 3.3 Tasks (Very Important)
-
-Purpose:
-
-- Break project into **clear tasks**
-- Assign owners
-- Track task status
-
-Example tasks:
-
-- “Design database schema”
-- “Write report section 2”
-- “Create PPT slides”
-
-Each task has:
-
-- Owner
-- Deadline
-- Status (created → in progress → done)
-
-If you didn’t own a task, you didn’t do work.
+## 4. Evidence Engine (The Heart)
+Located in the `shared` directory, the event recorder captures every meaningful action:
+- **Type**: TASK_CREATED, STATUS_CHANGED, TASK_APPROVED.
+- **Timestamp**: Server-side timestamp (non-alterable).
+- **Metadata**: Stores the context (Task Title, status transition).
+- **Storage**: Saved in the `evidence_events` table, which serves as an append-only audit log.
 
 ---
 
-### 3.4 Evidence (The Heart of the System)
+## 5. Work Flow & Accountability Logic
 
-This is the **most important part**.
+### 5.1 Task Lifecycle
+1. **Creation**: Leader creates a task and assigns it. (Logged as evidence)
+2. **Acceptance**: Member marks task as `IN_PROGRESS`. (Logged as evidence)
+3. **Submission**: Member marks task as `DONE`. (Logged as evidence)
+4. **Validation**: Leader verifies the work and marks it as `APPROVED`. (Logged as evidence)
 
-Every action creates **evidence**.
+**Only APPROVED tasks contribute to the final Accountability Score.**
 
-Examples:
-
-- Task marked done
-- File uploaded
-- Comment added
-- Peer review submitted
-- Git commit linked (optional)
-
-Rules:
-
-- Evidence is **never deleted**
-- Evidence is **never edited**
-- Everything is time-stamped
-
-If it’s not recorded, it didn’t happen.
+### 5.2 Accountability Scoring
+The system calculates a score for each member based on:
+- **Completion Rate**: (Approved Tasks / Assigned Tasks) * 100.
+- **Consistency**: Frequency and timing of evidence (to prevent last-minute spam).
+- **Approval Quality**: Work that is rejected or stays "DONE" without being approved lowers the score potential.
 
 ---
 
-### 3.5 Peer Reviews
-
-At milestones, students review each other on:
-
-- Did this person complete tasks?
-- Were they reliable?
-- Did they help?
-
-Important rule:
-Peer reviews are **weighted**.
-
-People who worked more:
-→ their review matters more  
-People who worked less:
-→ their review matters less
-
-This prevents “lazy group gangs”.
+## 6. Implementation Stack
+- **Backend**: Node.js & TypeScript, Express.js.
+- **Database**: PostgreSQL (Centralized for shared schema access).
+- **Frontend**: React (Vite), SPA architecture.
+- **Communication**: REST APIs with JWT authentication.
 
 ---
 
-### 3.6 Scoring Engine (Automatic)
-
-This part calculates contribution.
-
-It looks at:
-
-- Tasks completed
-- Deadlines met or missed
-- Amount of evidence
-- Peer reviews (weighted)
-- Work spread over time
-
-It runs automatically in the background.
-
-No manual grading.
+## 7. Anti-Cheat Mechanisms
+- **Append-only Logs**: Even if a task is deleted (not currently allowed), the `evidence_events` log remains as proof of intent or action.
+- **Strict Roles**: Only assigned owners can update status; only project owners can approve.
+- **Audit Trail**: Every action is linked to a user ID and a timestamp, making "fake work" detectable through sequence analysis.
 
 ---
 
-### 3.7 Reports
-
-Faculty sees:
-
-- Who did what
-- When they did it
-- Contribution percentage
-- Red flags (last-minute work, fake activity)
-
-Students see:
-
-- Their own contribution
-- How it compares to others
-
-No arguing. The data is visible.
-
----
-
-## 4. How Everything Works Together (Simple Flow)
-
-Example: Student completes a task
-
-1. Task is marked DONE
-2. System records this as evidence
-3. Evidence is saved forever
-4. Scoring engine updates scores
-5. Report shows updated contribution
-
-Nothing is overwritten.
-Everything leaves a trail.
-
----
-
-## 5. How Contribution Is Calculated (Simple Idea)
-
-Contribution depends on:
-
-- How many tasks you owned
-- How many you finished
-- Whether you finished on time
-- How consistent your work was
-- What others say about you (weighted)
-
-Scores are **relative inside the group**.
-
-So:
-
-- In a lazy group, effort still stands out
-- In a strong group, freeloading is obvious
-
----
-
-## 6. How the System Stops Cheating
-
-Common tricks and how the system handles them:
-
-• **Last-day work spam**
-→ flagged as suspicious
-
-• **Touching many tasks but finishing none**
-→ low score
-
-• **Fake peer reviews**
-→ low-weight reviewers don’t matter
-
-• **Spam comments or uploads**
-→ repeated low-value actions lose weight
-
-The system assumes people will try to cheat.
-
----
-
-## 7. Technology (Kept Simple)
-
-Backend:
-
-- Node.js + TypeScript
-
-Database:
-
-- PostgreSQL
-
-Frontend:
-
-- React
-
-Events:
-
-- Simple background worker (no heavy tools at start)
-
-Authentication:
-
-- JWT tokens
-
-No overengineering.
-
----
-
-## 8. Versions (Build in Order)
-
-### Version 0.1 – Proof
-
-- Login
-- Projects
-- Tasks
-- Evidence logging
-- Basic score calculation
-
-### Version 0.2 – Fairness
-
-- Automatic scoring
-- Peer reviews
-- Contribution reports
-
-### Version 0.3 – Anti-Cheat
-
-- Suspicious activity detection
-- Better scoring rules
-
-### Version 1.0 – Final
-
-- GitHub integration
-- Exportable reports
-- Admin controls
-
----
-
-## 9. Important Rule
-
-If the system:
-
-- Trusts self-reported work
-- Allows deleting evidence
-- Hides how scores are calculated
-
-Then it has failed.
-
-The whole point is **visible truth**.
+## 8. Development Roadmap
+- [x] **v0.1 (Proof)**: Auth, Projects, Tasks, Persistent Session, Confirmation Modals.
+- [x] **v0.2 (Evidence)**: Unified Evidence logging, Activity Tracker.
+- [ ] **v0.3 (Scoring)**: Centralized Scoring Engine with advanced weighting.
+- [ ] **v1.0 (Integration)**: GitHub Action hooks and PDF Report export.
