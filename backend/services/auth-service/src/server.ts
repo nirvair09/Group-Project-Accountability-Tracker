@@ -1,3 +1,11 @@
+import moduleAlias from "module-alias";
+import path from "path";
+
+// Register aliases for production (dist)
+if (process.env.NODE_ENV === "production" || !__filename.endsWith(".ts")) {
+  moduleAlias.addAlias("@gpa/shared", path.join(__dirname, "../../../shared"));
+}
+
 import { app } from "./app";
 import { env } from "./config/env";
 
