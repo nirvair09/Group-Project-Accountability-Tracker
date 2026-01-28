@@ -1,4 +1,8 @@
+import { useAuth } from "../auth/AuthContext";
+
 export default function TopNav() {
+  const { user, logout } = useAuth();
+
   return (
     <header
       style={{
@@ -12,34 +16,67 @@ export default function TopNav() {
       }}
     >
       {/* Left */}
-      <div style={{ fontWeight: 600 }}>GPA Tracker</div>
+      <div style={{ fontWeight: 600, fontSize: "1.2rem", color: "#4f46e5" }}>GPA Tracker</div>
 
       {/* Center */}
-      <select
-        style={{
-          padding: "6px 8px",
-          border: "1px solid #d1d5db",
-          borderRadius: "4px",
-        }}
-      >
-        <option>Group Project Accountability Tracker</option>
-      </select>
+      <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+        <select
+          style={{
+            padding: "6px 12px",
+            border: "1px solid #d1d5db",
+            borderRadius: "6px",
+            fontSize: "0.9rem",
+            outline: "none",
+            backgroundColor: "#f9fafb"
+          }}
+        >
+          <option>Group Project Accountability Tracker</option>
+        </select>
+      </div>
 
       {/* Right */}
-      <div
-        style={{
-          width: "32px",
-          height: "32px",
-          borderRadius: "50%",
-          backgroundColor: "#9ca3af",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#fff",
-          fontSize: "14px",
-        }}
-      >
-        R
+      <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#374151" }}>{user?.name}</div>
+          <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{user?.email}</div>
+        </div>
+
+        <div
+          style={{
+            width: "36px",
+            height: "36px",
+            borderRadius: "10px",
+            backgroundColor: "#4f46e5",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontSize: "16px",
+            fontWeight: "bold",
+            boxShadow: "0 2px 4px rgba(79, 70, 229, 0.2)"
+          }}
+        >
+          {user?.name?.charAt(0).toUpperCase() || "U"}
+        </div>
+
+        <button
+          onClick={logout}
+          style={{
+            padding: "6px 12px",
+            backgroundColor: "#fee2e2",
+            color: "#ef4444",
+            border: "none",
+            borderRadius: "6px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "background-color 0.2s"
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#fecaca")}
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#fee2e2")}
+        >
+          Logout
+        </button>
       </div>
     </header>
   );
