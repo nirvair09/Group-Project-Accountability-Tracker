@@ -28,7 +28,7 @@ export default function Activity() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-          {activities.map((event) => (
+          {activities.map((event: any) => (
             <div key={event.event_id} style={{ 
                 padding: "15px", 
                 border: "1px solid #eee", 

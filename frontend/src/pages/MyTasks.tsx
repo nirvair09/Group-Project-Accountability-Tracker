@@ -4,7 +4,7 @@ import { getMyTasks, updateTaskStatus } from "../api/tasksApi";
 import ConfirmModal from "../components/ConfirmModal";
 
 export default function MyTasks() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
