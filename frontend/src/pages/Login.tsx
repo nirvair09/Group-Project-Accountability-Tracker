@@ -27,12 +27,13 @@ export default function Login() {
 
   return (
     <div style={{
-      minHeight: "100vh",
+      width: "100vw",
+      height: "100vh",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      padding: "20px"
+      overflow: "hidden"
     }}>
       <div style={{
         width: "100%",
