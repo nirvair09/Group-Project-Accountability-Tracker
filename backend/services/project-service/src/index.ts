@@ -10,8 +10,10 @@ app.use(cors());
 app.use(express.json());
 app.use(routes);
 
-app.listen(process.env.PROJECT_PORT, async () => {
-  console.log("Project Service is running on port:", process.env.PROJECT_PORT);
+const PORT = process.env.PORT || process.env.PROJECT_PORT || 4002;
+
+app.listen(PORT, async () => {
+  console.log("Project Service is running on port:", PORT);
   try {
     await pool.query("SELECT NOW()");
     console.log("DB Connected");

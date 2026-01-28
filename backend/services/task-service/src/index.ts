@@ -17,8 +17,10 @@ app.use(taskRoutes);
 
 import { pool } from "../../../shared/db";
 
-app.listen(process.env.TASK_PORT, async () => {
-  console.log("Task Service is running on port:", process.env.TASK_PORT);
+const PORT = process.env.PORT || process.env.TASK_PORT || 4003;
+
+app.listen(PORT, async () => {
+  console.log("Task Service is running on port:", PORT);
   try {
     await pool.query("SELECT NOW()");
     console.log("DB Connected");

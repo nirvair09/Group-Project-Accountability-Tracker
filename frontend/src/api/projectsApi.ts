@@ -1,6 +1,6 @@
 import { apiFetch } from "./http";
 
-const BASE = "http://localhost:4002";
+const BASE = import.meta.env.VITE_PROJECT_API_URL || "http://localhost:4002";
 
 export function getProjects(token: string) {
   return apiFetch(`${BASE}/projects`, {}, token);
