@@ -1,36 +1,15 @@
 import { useState } from 'react';
-import { useProjectActivity } from '../hooks/useActivityQuery.js';
+import { useProjectActivity, useAllActivity } from '../hooks/useActivityQuery.js';
 import ActivityFeedItem from './ActivityFeedItem.jsx';
 
 export default function ActivityFeed({ projectId }) {
-  const [filters, setFilters] = useState({
-    type: '',
-    limit: 50,
-    offset: 0,
-  });
+  const [type, setType] = useState('');
 
-  const { data, isLoading, error } = useProjectActivity(projectId, filters);
+  const projectQuery = useProjectActivity(projectId);
+  const allQuery = useAllActivity(!projectId);
+  const { data, isLoading, error } = projectId ? projectQuery : allQuery;
 
-  const events = data?.events || [];
-  const pagination = data?.pagination || {};
-
-  const handleFilterChange = (newFilters) => {
-    setFilters({ ...filters, ...newFilters, offset: 0 });
-  };
-
-  const handleNextPage = () => {
-    setFilters({
-      ...filters,
-      offset: filters.offset + filters.limit,
-    });
-  };
-
-  const handlePrevPage = () => {
-    setFilters({
-      ...filters,
-      offset: Math.max(0, filters.offset - filters.limit),
-    });
-  };
+  const events = (data || []).filter((event) => !type || event.type === type);
 
   if (isLoading) {
     return <div className="activity-feed" style={{ textAlign: 'center', padding: '2rem' }}>Loading activity...</div>;
@@ -45,8 +24,8 @@ export default function ActivityFeed({ projectId }) {
       <div style={{ marginBottom: '2rem' }}>
         <h3>Filter by type:</h3>
         <select
-          value={filters.type}
-          onChange={(e) => handleFilterChange({ type: e.target.value })}
+          value={type}
+          onChange={(e) => setType(e.target.value)}
           style={{
             padding: '0.5rem',
             borderRadius: '4px',
@@ -69,47 +48,6 @@ export default function ActivityFeed({ projectId }) {
           ))
         )}
       </div>
-
-      {pagination.total > 0 && (
-        <div style={{ marginTop: '2rem', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '1rem', alignItems: 'center' }}>
-          <button
-            onClick={handlePrevPage}
-            disabled={filters.offset === 0}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#6366f1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: filters.offset === 0 ? 'not-allowed' : 'pointer',
-              opacity: filters.offset === 0 ? 0.5 : 1,
-            }}
-          >
-            ← Previous
-          </button>
-
-          <span style={{ color: '#666' }}>
-            {filters.offset + 1} - {Math.min(filters.offset + filters.limit, pagination.total)} 
-            of {pagination.total}
-          </span>
-
-          <button
-            onClick={handleNextPage}
-            disabled={!pagination.hasMore}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#6366f1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: !pagination.hasMore ? 'not-allowed' : 'pointer',
-              opacity: !pagination.hasMore ? 0.5 : 1,
-            }}
-          >
-            Next →
-          </button>
-        </div>
-      )}
     </div>
   );
 }

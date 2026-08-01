@@ -6,9 +6,6 @@ export function getTasksByProject(projectId, token) {
 export function getProjectActivity(projectId, token) {
     return apiFetch(`${BASE}/projects/${projectId}/activity`, {}, token);
 }
-export function getAllActivity(token) {
-    return apiFetch(`${BASE}/activity`, {}, token);
-}
 export function getMyTasks(token) {
     return apiFetch(`${BASE}/tasks/mine`, {}, token);
 }
