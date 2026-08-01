@@ -74,45 +74,7 @@ function deepSanitize(obj) {
   return obj;
 }
 
-/**
- * CORS Configuration Factory
- *
- * Returns a strict CORS config object for production use.
- * Whitelists only known origins and allows credentials.
- */
-/* [DEAD CODE]
-function createCorsConfig(allowedOrigins = []) {
-  const origins = allowedOrigins.length > 0
-    ? allowedOrigins
-    : (process.env.CORS_ORIGIN || "http://localhost:5173").split(",").map((o) => o.trim());
-
-  return {
-    origin: function (origin, callback) {
-      // Allow requests with no origin (mobile apps, curl, etc.)
-      if (!origin) return callback(null, true);
-
-      if (origins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS: Origin ${origin} not allowed`));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Request-ID",
-      "X-Requested-With",
-    ],
-    exposedHeaders: ["X-Request-ID"],
-    maxAge: 86400, // Preflight cache: 24 hours
-  };
-}
-*/
-
 module.exports = {
   createSecurityMiddleware,
   sanitizeInput,
-  // [DEAD CODE] createCorsConfig,
 };

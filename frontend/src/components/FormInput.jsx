@@ -2,7 +2,7 @@
 export const FormInput = ({ label, error, helperText, id, className = "", ...props }) => {
   const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
   return (<div style={{ marginBottom: "1.25rem", display: "flex", flexDirection: "column" }}>
-    {label && (<label htmlFor={inputId} className="form-label" style={{ margin: "8px" }}>
+    {label && (<label htmlFor={inputId} className="form-label">
       {label}
     </label>)}
     <input id={inputId} className={`form-input ${error ? "error" : ""} ${className}`.trim()} {...props} />

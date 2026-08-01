@@ -25,4 +25,4 @@ function authenticate(req, _res, next) {
   }
 }
 
-module.exports = { authenticate, /* [DEAD CODE] authMiddleware: authenticate */ };
+module.exports = { authenticate };
