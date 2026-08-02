@@ -51,6 +51,7 @@ function App() {
                                     <Route path="/scores" element={<Scores />} />
                                     <Route path="/" element={<Navigate to="/dashboard" />} />
                                 </Route>
+                                <Route path="*" element={<Navigate to="/dashboard" />} />
                             </>
                         )}
                     </Routes>
